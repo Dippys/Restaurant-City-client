@@ -18,23 +18,36 @@ package com.playfish.games.cooking.tutorials
          super();
          this.restaurant = param1;
          GameWorld.settingOverlay.hideSaveButton();
-         param1.buttonStreet.visible = false;
-         param1.buttonDecorate.visible = false;
-         param1.buttonChangeMenu.visible = false;
-         param1.buttonMessage.visible = false;
-         param1.buttonAvatar.visible = false;
-         param1.buttonAward.visible = false;
-         param1.buttonMarket.visible = false;
-         param1.buttonMusicPlayer.visible = false;
-         param1.buttonGift.visible = false;
-         param1.buttonFolder.visible = false;
-         param1.uiLevelBar.mc_levelIcon.visible = false;
-         param1.uiLevelBar.mc_level.visible = false;
-         param1.uiPopularity.mc_demandIcon.visible = false;
-         param1.uiPopularity.tf_demand.visible = false;
+         hideObject(param1.buttonStreet);
+         hideObject(param1.buttonDecorate);
+         hideObject(param1.buttonChangeMenu);
+         hideObject(param1.buttonMessage);
+         hideObject(param1.buttonAvatar);
+         hideObject(param1.buttonAward);
+         hideObject(param1.buttonMarket);
+         hideObject(param1.buttonMusicPlayer);
+         hideObject(param1.buttonGift);
+         hideObject(param1.buttonFolder);
+         hideObject(param1.uiLevelBar.mc_levelIcon);
+         hideObject(param1.uiLevelBar.mc_level);
+         hideObject(param1.uiPopularity.mc_demandIcon);
+         hideObject(param1.uiPopularity.tf_demand);
+         if(param1.uiPopularity.mc_popularity)
+         {
+            hideObject(param1.uiPopularity.mc_popularity.mc_demandIcon);
+            hideObject(param1.uiPopularity.mc_popularity.tf_demand);
+         }
          param1.employeeActors[0].mouseEnabled = false;
          param1.employeeActors[0].mouseChildren = false;
          wait(1000);
+      }
+      
+      private function hideObject(param1:Object) : void
+      {
+         if(param1 != null)
+         {
+            param1.visible = false;
+         }
       }
       
       override public function tickScript(param1:uint) : void

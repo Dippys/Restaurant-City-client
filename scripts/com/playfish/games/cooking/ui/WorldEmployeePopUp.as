@@ -90,7 +90,31 @@ package com.playfish.games.cooking.ui
          catch(e:ArgumentError)
          {
             Debug.out("WorldEmployeePopUp missing frame label: " + param2);
-            param1.gotoAndStop(1);
+            showStableFrame(param1);
+         }
+      }
+      
+      private function showStableFrame(param1:MovieClip) : void
+      {
+         try
+         {
+            param1.gotoAndStop(param1.totalFrames);
+         }
+         catch(e:Error)
+         {
+            param1.stop();
+         }
+         param1.x = 0;
+         param1.y = 0;
+         param1.rotation = 0;
+         param1.scaleX = 1;
+         param1.scaleY = 1;
+         contentPanel = scene.mc_content;
+         if(contentPanel != null)
+         {
+            contentPanel.rotation = 0;
+            contentPanel.scaleX = 1;
+            contentPanel.scaleY = 1;
          }
       }
       

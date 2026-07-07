@@ -5,6 +5,7 @@ package com.playfish.games.cooking
    import com.playfish.games.cooking.utils.BatchFileLoader;
    import com.playfish.rpc.cooking.RpcClient;
    import flash.display.Loader;
+   import flash.display.LoaderInfo;
    import flash.display.MovieClip;
    import flash.events.*;
    import flash.system.*;
@@ -37,6 +38,8 @@ package com.playfish.games.cooking
       private var rpcsSuccess:Boolean = false;
       
       public var getCashBalance:RpcGetCashBalance;
+      
+      private var pendingSwfLoads:int = 0;
       
       public function GameInitLoader()
       {
@@ -82,9 +85,15 @@ package com.playfish.games.cooking
       
       private function onSwfLoaded(param1:Event) : void
       {
-         Engine.instance.removeEventListener(Event.ENTER_FRAME,onSwfLoaded);
-         swfsSuccess = true;
-         onLoadSuccess();
+         var _loc2_:LoaderInfo = LoaderInfo(param1.currentTarget);
+         _loc2_.removeEventListener(Event.INIT,onSwfLoaded);
+         --pendingSwfLoads;
+         Debug.out("swf initialized " + pendingSwfLoads + " remaining");
+         if(pendingSwfLoads <= 0)
+         {
+            swfsSuccess = true;
+            onLoadSuccess();
+         }
       }
       
       public function destroy() : void
@@ -107,15 +116,16 @@ package com.playfish.games.cooking
          Debug.out("onAssetFilesLoaded");
          var _loc2_:LoaderContext = new LoaderContext(false,ApplicationDomain.currentDomain);
          swfLoaders = new Array();
+         pendingSwfLoads = SWF_ASSET_NAMES.length;
          var _loc3_:int = 0;
          while(_loc3_ < SWF_ASSET_NAMES.length)
          {
             _loc4_ = new Loader();
+            _loc4_.contentLoaderInfo.addEventListener(Event.INIT,onSwfLoaded,false,0,true);
             _loc4_.loadBytes(fileLoader.getBytes(SWF_ASSET_NAMES[_loc3_]),_loc2_);
             swfLoaders.push(_loc4_);
             _loc3_++;
          }
-         Engine.instance.addEventListener(Event.ENTER_FRAME,onSwfLoaded);
       }
       
       private function onSocialNetworkInitError(param1:Event) : void
