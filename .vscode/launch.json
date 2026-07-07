@@ -1,0 +1,25 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "swf",
+      "request": "launch",
+      "name": "Build (debug) + Launch game.swf",
+      "program": "${workspaceFolder}\\bin\\game.swf",
+      "runtimeExecutable": "C:\\flex\\Player\\flashplayer_32_sa_debug.exe",
+      "preLaunchTask": "build debug swf"
+    },
+    {
+      "type": "swf",
+      "request": "launch",
+      "name": "Launch game.swf (no rebuild)",
+      "program": "${workspaceFolder}\\bin\\game.swf",
+      "runtimeExecutable": "C:\\flex\\Player\\flashplayer_32_sa_debug.exe"
+    },
+    {
+      "type": "swf",
+      "request": "attach",
+      "name": "Attach to running Flash debug player"
+    }
+  ]
+}

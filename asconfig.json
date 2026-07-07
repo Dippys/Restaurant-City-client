@@ -1,0 +1,31 @@
+{
+	"//": "Editor/IntelliSense parity config for the AS3&MXML (as3mxml) VS Code extension.",
+	"//canonical-build": "The authoritative build is build.bat (java -jar C:/flex/lib/mxmlc.jar). See README.md.",
+	"config": "flex",
+	"compilerOptions": {
+		"source-path": [
+			"scripts"
+		],
+		"external-library-path": [
+			"C:/flex/frameworks/libs/player/25.0/playerglobal.swc"
+		],
+		"library-path": [],
+		"target-player": "25.0",
+		"swf-version": 25,
+		"default-size": {
+			"width": 760,
+			"height": 600
+		},
+		"default-frame-rate": 25,
+		"static-link-runtime-shared-libraries": true,
+		"include-classes": [
+			"away3d.events.BillboardEvent"
+		],
+		"debug": false,
+		"warnings": false,
+		"output": "bin/game.swf"
+	},
+	"files": [
+		"scripts/com/playfish/games/cooking/Engine.as"
+	]
+}
