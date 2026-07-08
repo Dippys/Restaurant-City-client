@@ -5,10 +5,8 @@ package com.playfish.games.cooking
    import com.playfish.rpc.share.NetworkUid;
    import flash.display.Bitmap;
    import flash.display.DisplayObject;
-   import flash.display.Shape;
    import flash.display.Sprite;
    import flash.events.EventDispatcher;
-   import flash.geom.Matrix;
    import flash.utils.ByteArray;
    
    public class GameUser extends EventDispatcher
@@ -665,7 +663,7 @@ package com.playfish.games.cooking
       {
          var _loc1_:CacheAvatarPortraitQueueItem = null;
          var _loc2_:Sprite = null;
-         var _loc3_:Shape = null;
+         var _loc3_:Bitmap = null;
          if(avatarFrame == null)
          {
             _loc1_ = cacheAvatarFrame();
@@ -673,10 +671,11 @@ package com.playfish.games.cooking
             _loc2_.addChild(_loc1_.cachedShape);
             return _loc2_;
          }
-         _loc3_ = new Shape();
-         _loc3_.graphics.beginBitmapFill(avatarFrame.bitmapData,new Matrix(1,0,0,1,avatarFrame.x,avatarFrame.y),false,true);
-         _loc3_.graphics.drawRect(avatarFrame.x,avatarFrame.y,avatarFrame.width,avatarFrame.height);
-         _loc3_.graphics.endFill();
+         _loc3_ = new Bitmap();
+         _loc3_.bitmapData = avatarFrame.bitmapData;
+         _loc3_.x = avatarFrame.x;
+         _loc3_.y = avatarFrame.y;
+         _loc3_.smoothing = true;
          return _loc3_;
       }
       

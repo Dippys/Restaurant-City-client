@@ -3,7 +3,7 @@ package com.playfish.games.cooking.ui
    import com.playfish.games.cooking.*;
    import com.playfish.games.cooking.debug.DebugShowAllShopItems;
    import com.playfish.games.cooking.events.*;
-   import flash.display.MovieClip;
+   import flash.display.*;
    import flash.events.*;
    import flash.filters.ColorMatrixFilter;
    import flash.geom.Rectangle;
@@ -26,6 +26,8 @@ package com.playfish.games.cooking.ui
       public static const TAB_OWN:int = 2;
       
       public static const TAB_CASH:int = 3;
+      
+      public static var currentBuildingTileClassName:String;
       
       public var giftButton:MovieClip;
       
@@ -216,7 +218,14 @@ package com.playfish.games.cooking.ui
          }
          else if(param1.className)
          {
-            _loc4_ = Engine.getMovieClip(param1.className);
+            if(Boolean(param1.group) && param1.group.name == "Body")
+            {
+               _loc4_ = getBodyItemMovieClip(param1);
+            }
+            else
+            {
+               _loc4_ = Engine.getMovieClip(param1.className);
+            }
          }
          else if(param1.texture)
          {
@@ -244,7 +253,14 @@ package com.playfish.games.cooking.ui
             _loc8_ = _loc4_["mc_rect"];
             if(_loc8_)
             {
-               _loc8_.visible = false;
+               if(Boolean(param1.group) && param1.group.name == "Body" && _loc8_.parent == _loc4_)
+               {
+                  _loc4_.removeChild(_loc8_);
+               }
+               else
+               {
+                  _loc8_.visible = false;
+               }
             }
             if(_loc4_["mc_mask"] != null)
             {
@@ -265,6 +281,69 @@ package com.playfish.games.cooking.ui
             _loc4_.y = _loc4_.y - _loc9_.top * _loc4_.scaleY - _loc9_.height * _loc4_.scaleY / 2;
          }
          return _loc4_;
+      }
+      
+      private static function getBodyItemMovieClip(param1:Object) : MovieClip
+      {
+         var _loc6_:Sprite = null;
+         var _loc7_:MovieClip = null;
+         var _loc2_:MovieClip = Engine.getMovieClip(param1.className);
+         if(!_loc2_)
+         {
+            return null;
+         }
+         var _loc3_:MovieClip = _loc2_["mc_rect"];
+         if(_loc3_)
+         {
+            if(_loc3_.parent == _loc2_)
+            {
+               _loc2_.removeChild(_loc3_);
+            }
+            else
+            {
+               _loc3_.visible = false;
+            }
+         }
+         var _loc4_:MovieClip = Engine.getMovieClip(getCurrentBuildingTileClassName());
+         if(!_loc4_)
+         {
+            return _loc2_;
+         }
+         var _loc5_:Rectangle = _loc2_.getBounds(null);
+         _loc6_ = new Sprite();
+         _loc7_ = new MovieClip();
+         _loc7_.tileBitmapData = new BitmapData(Math.max(1,_loc4_.width),Math.max(1,_loc4_.height),true,0);
+         _loc7_.tileBitmapData.draw(_loc4_);
+         _loc6_.graphics.beginBitmapFill(_loc7_.tileBitmapData,null,true,false);
+         _loc6_.graphics.drawRect(_loc5_.left,_loc5_.top,_loc5_.width,_loc5_.height);
+         _loc6_.graphics.endFill();
+         _loc6_.mask = _loc2_;
+         _loc7_.addChild(_loc6_);
+         _loc7_.addChild(_loc2_);
+         return _loc7_;
+      }
+      
+      private static function getCurrentBuildingTileClassName() : String
+      {
+         var _loc2_:UserItem = null;
+         var _loc1_:int = 0;
+         if(currentBuildingTileClassName)
+         {
+            return currentBuildingTileClassName;
+         }
+         if(GameWorld.gameUser)
+         {
+            while(_loc1_ < GameWorld.gameUser.usedBuildingItems.length)
+            {
+               _loc2_ = GameWorld.gameUser.usedBuildingItems[_loc1_];
+               if(Boolean(_loc2_.itemConfig) && Boolean(_loc2_.itemConfig.group) && _loc2_.itemConfig.group.name == "Tile")
+               {
+                  return _loc2_.itemConfig.className;
+               }
+               _loc1_++;
+            }
+         }
+         return "Tile09";
       }
       
       private function compareShopItems(param1:Object, param2:Object) : int

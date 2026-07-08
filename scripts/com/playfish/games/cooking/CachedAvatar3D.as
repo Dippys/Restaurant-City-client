@@ -1,7 +1,7 @@
 package com.playfish.games.cooking
 {
+   import flash.display.Bitmap;
    import flash.display.Sprite;
-   import flash.geom.Matrix;
    
    public class CachedAvatar3D extends Sprite
    {
@@ -20,6 +20,8 @@ package com.playfish.games.cooking
       
       private var animationDirection:int;
       
+      private var frameBitmap:Bitmap;
+      
       public var animationType:int;
       
       public function CachedAvatar3D(param1:GameUser, param2:Array)
@@ -27,6 +29,9 @@ package com.playfish.games.cooking
          var _loc3_:CacheUserAnimationQueueItem = null;
          super();
          this.user = param1;
+         frameBitmap = new Bitmap();
+         frameBitmap.smoothing = true;
+         addChild(frameBitmap);
          if(param1.requireLoadAnimation(param2))
          {
             _loc3_ = param1.loadAnimationFrames(param2);
@@ -90,8 +95,6 @@ package com.playfish.games.cooking
       public function setAnimationFrame(param1:int) : void
       {
          var _loc2_:Object = null;
-         var _loc3_:Matrix = null;
-         var _loc4_:Number = NaN;
          animationFrameIndex = param1;
          graphics.clear();
          if(animationDirection >= 5)
@@ -104,22 +107,25 @@ package com.playfish.games.cooking
          }
          if(_loc2_)
          {
-            _loc3_ = new Matrix();
+            frameBitmap.visible = true;
+            frameBitmap.bitmapData = _loc2_.bitmapData;
+            frameBitmap.smoothing = true;
             if(animationDirection >= 5)
             {
-               _loc3_.a = -1;
-               _loc3_.tx = -_loc2_.x;
-               _loc4_ = -(_loc2_.bitmapData.width + _loc2_.x);
+               frameBitmap.scaleX = -1;
+               frameBitmap.x = -_loc2_.x;
             }
             else
             {
-               _loc3_.tx = _loc2_.x;
-               _loc4_ = Number(_loc2_.x);
+               frameBitmap.scaleX = 1;
+               frameBitmap.x = _loc2_.x;
             }
-            _loc3_.ty = _loc2_.y + WorldRestaurant.tileHeight / 2;
-            graphics.beginBitmapFill(_loc2_.bitmapData,_loc3_,false,true);
-            graphics.drawRect(_loc4_,_loc3_.ty,_loc2_.bitmapData.width,_loc2_.bitmapData.height);
-            graphics.endFill();
+            frameBitmap.y = _loc2_.y + WorldRestaurant.tileHeight / 2;
+         }
+         else
+         {
+            frameBitmap.visible = false;
+            frameBitmap.bitmapData = null;
          }
       }
    }

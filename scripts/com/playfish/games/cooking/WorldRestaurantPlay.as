@@ -216,9 +216,13 @@ package com.playfish.games.cooking
       
       public function WorldRestaurantPlay(param1:GameUser, param2:Boolean = false, param3:Boolean = false)
       {
+         var _loc4_:int = getTimer();
+         PerfTrace.mark("WorldRestaurantPlay constructor begin visitMode=" + param2 + " employees=" + param1.employeeUsers.length);
          this.visitMode = param2;
          this.enableRating = param3;
          super(param1);
+         PerfTrace.slow("WorldRestaurantPlay constructor/super",_loc4_,5);
+         PerfTrace.mark("WorldRestaurantPlay constructor end");
       }
       
       public static function setRating(param1:MovieClip, param2:GameUser) : void
@@ -866,35 +870,51 @@ package com.playfish.games.cooking
          var _loc6_:MovieClip = null;
          var _loc7_:WorldPopUp = null;
          var _loc8_:WorldEarningPopUp = null;
+         var _loc9_:int = getTimer();
+         PerfTrace.mark("WorldRestaurantPlay.showNotify begin visitMode=" + visitMode);
          super.showNotify();
          instance = this;
          if(visitMode)
          {
+            _loc9_ = getTimer();
             curFriendsList.y = Engine.getStageBottom();
             addObject(curFriendsList);
             curFriendsList.addEventListener(FriendListEvent.USER_CLICKED,onFriendListUserClicked,false,0,true);
+            PerfTrace.slow("WorldRestaurantPlay.showNotify friends list",_loc9_,5);
          }
          else
          {
+            _loc9_ = getTimer();
             GameWorld.hiredFriendsPanel.y = Engine.getStageBottom();
             GameWorld.hiredFriendsPanel.refreshInviteIcons();
             addObject(GameWorld.hiredFriendsPanel);
+            PerfTrace.slow("WorldRestaurantPlay.showNotify hired panel",_loc9_,5);
          }
+         _loc9_ = getTimer();
          addObject(GameWorld.cashPanel);
+         restoreHudLayers();
+         PerfTrace.slow("WorldRestaurantPlay.showNotify hud/cash",_loc9_,5);
+         _loc9_ = getTimer();
          playBgMusic(getPlayingMusicForUser(gameUser).itemConfig);
+         PerfTrace.slow("WorldRestaurantPlay.showNotify bg music",_loc9_,5);
          silentTick = true;
-         var _loc1_:int = 40 + Engine.rnd(0,5);
-         var _loc2_:int = 1000;
+         var _loc1_:int = 1;
+         var _loc2_:int = 250;
          var _loc3_:Number = 0;
+         _loc9_ = getTimer();
          while(_loc3_ < _loc1_)
          {
             tickBase(_loc2_);
             _loc3_++;
          }
+         PerfTrace.slow("WorldRestaurantPlay.showNotify warmup ticks " + _loc1_,_loc9_,5);
          silentTick = false;
+         _loc9_ = getTimer();
          displayGameStartUpPopUps();
+         PerfTrace.slow("WorldRestaurantPlay.showNotify startup popups",_loc9_,5);
          if(firstVisitIngredientReward != null)
          {
+            _loc9_ = getTimer();
             _loc4_ = Engine.getMovieClip("FirstFriendVisitBonusAnim");
             _loc5_ = _loc4_.mc_content;
             GameWorld.textHandler.setTextFieldWithId(_loc5_.tf_title,"FirstFriendVisitBonus");
@@ -909,6 +929,7 @@ package com.playfish.games.cooking
             _loc7_ = new WorldPopUp(_loc4_,_loc5_.mc_tick,null);
             _loc7_.show();
             firstVisitIngredientReward = null;
+            PerfTrace.slow("WorldRestaurantPlay.showNotify first visit reward",_loc9_,5);
          }
          if(visitMode && WorldStreet.streetType == WorldStreet.STREET_TYPE_FRIENDS)
          {
@@ -916,6 +937,7 @@ package com.playfish.games.cooking
          }
          if(!visitMode)
          {
+            _loc9_ = getTimer();
             GameWorld.tickOfflineTime();
             GameWorld.offlineEarningTimer = -1;
             GameWorld.settingOverlay.showSaveButton();
@@ -928,14 +950,20 @@ package com.playfish.games.cooking
             GameWorld.offlineEarning = 0;
             GameWorld.offlineGourmetPoints = 0;
             GameWorld.checkLevelUp();
+            PerfTrace.slow("WorldRestaurantPlay.showNotify owner rewards",_loc9_,5);
          }
+         _loc9_ = getTimer();
          Engine.instance.stage.addEventListener(Event.FULLSCREEN,onFullScreen,false,0,true);
          onFullScreen(null);
+         PerfTrace.slow("WorldRestaurantPlay.showNotify fullscreen/layout",_loc9_,5);
          if(FoodKingPopUp.blackSheepItems.length > 0)
          {
+            _loc9_ = getTimer();
             foodKing = new FoodKing(this,null);
             foodKing.addToRestaurant();
+            PerfTrace.slow("WorldRestaurantPlay.showNotify food king",_loc9_,5);
          }
+         PerfTrace.mark("WorldRestaurantPlay.showNotify end");
       }
       
       public function displayGameStartUpPopUps() : void
@@ -1603,6 +1631,77 @@ package com.playfish.games.cooking
          {
             buttonBookmark.x = Engine.getStageX() + buttonBookmark.width / 2;
          }
+         restoreHudLayers();
+      }
+      
+      private function restoreHudLayers() : void
+      {
+         if(buttonLayer)
+         {
+            buttonLayer.visible = true;
+            buttonLayer.alpha = 1;
+            buttonLayer.drawPriority = 20000;
+         }
+         if(uiButton)
+         {
+            uiButton.visible = true;
+            uiButton.alpha = 1;
+            uiButton.y = Engine.getStageBottom();
+            if(uiButton.mc_zoom)
+            {
+               uiButton.mc_zoom.x = Engine.getStageRight() - 16;
+            }
+            if(buttonLayer && uiButton.parent != buttonLayer)
+            {
+               buttonLayer.addChild(uiButton);
+            }
+         }
+         if(uiLevelBar)
+         {
+            uiLevelBar.visible = true;
+            uiLevelBar.alpha = 1;
+            uiLevelBar.y = Engine.getStageY();
+            if(buttonLayer && uiLevelBar.parent != buttonLayer)
+            {
+               buttonLayer.addChild(uiLevelBar);
+            }
+         }
+         if(uiPopularity)
+         {
+            uiPopularity.visible = true;
+            uiPopularity.alpha = 1;
+            uiPopularity.x = Engine.getStageRight();
+            uiPopularity.y = Engine.getStageY();
+            if(buttonLayer && !visitMode && uiPopularity.parent != buttonLayer)
+            {
+               buttonLayer.addChild(uiPopularity);
+            }
+         }
+         if(uiVisitBanner)
+         {
+            uiVisitBanner.visible = true;
+            uiVisitBanner.alpha = 1;
+            uiVisitBanner.x = Engine.getStageRight();
+            uiVisitBanner.y = Engine.getStageY();
+            if(buttonLayer && visitMode && uiVisitBanner.parent != buttonLayer)
+            {
+               buttonLayer.addChild(uiVisitBanner);
+            }
+         }
+         if(GameWorld.cashPanel)
+         {
+            GameWorld.cashPanel.visible = true;
+            GameWorld.cashPanel.alpha = 1;
+            addObject(GameWorld.cashPanel);
+         }
+         if(!visitMode && GameWorld.hiredFriendsPanel)
+         {
+            GameWorld.hiredFriendsPanel.visible = true;
+            GameWorld.hiredFriendsPanel.alpha = 1;
+            GameWorld.hiredFriendsPanel.y = Engine.getStageBottom();
+            GameWorld.hiredFriendsPanel.show();
+            addObject(GameWorld.hiredFriendsPanel);
+         }
       }
       
       public function hideRateButton() : void
@@ -1685,7 +1784,11 @@ package com.playfish.games.cooking
          var _loc8_:RandomBasket = null;
          var _loc9_:Boolean = false;
          var _loc10_:GameUserEmployee = null;
+         var _loc11_:int = getTimer();
+         PerfTrace.mark("WorldRestaurantPlay.init begin visitMode=" + visitMode + " placedItems=" + placedItems.length);
          super.init();
+         PerfTrace.slow("WorldRestaurantPlay.init super",_loc11_,5);
+         _loc11_ = getTimer();
          if(!visitMode)
          {
             canvasHeight = Engine.STAGE_HEIGHT - GameWorld.hiredFriendsPanel.getSceneHeight();
@@ -1765,6 +1868,7 @@ package com.playfish.games.cooking
             buttonFolder.mc_new.visible = false;
             folderButtonHandler = new FolderButton(buttonFolder);
             buttonLayer.addChild(uiPopularity);
+            PerfTrace.slow("WorldRestaurantPlay.init owner UI",_loc11_,5);
          }
          else
          {
@@ -1833,7 +1937,9 @@ package com.playfish.games.cooking
                uiVisitBanner.mc_userStars.visible = false;
             }
             buttonLayer.addChild(uiVisitBanner);
+            PerfTrace.slow("WorldRestaurantPlay.init visit UI",_loc11_,5);
          }
+         _loc11_ = getTimer();
          enablePlots();
          setButtonMode(uiButton.buttonPhoto,true);
          uiButton.buttonPhoto.toolTip = new ToolTip(uiButton.buttonPhoto,GameWorld.textHandler.getTextFromId("ToolTipPhoto"));
@@ -1859,6 +1965,9 @@ package com.playfish.games.cooking
          zoomLever = new ZoomLever(uiButton.mc_zoom,this);
          buttonLayer.addChild(uiButton);
          buttonLayer.addChild(uiLevelBar);
+         restoreHudLayers();
+         PerfTrace.slow("WorldRestaurantPlay.init shared UI",_loc11_,5);
+         _loc11_ = getTimer();
          var _loc1_:int = 0;
          while(_loc1_ < placedItems.length)
          {
@@ -1927,6 +2036,8 @@ package com.playfish.games.cooking
             _loc5_.initFunctions(this);
             _loc1_++;
          }
+         PerfTrace.slow("WorldRestaurantPlay.init classify/initFunctions",_loc11_,5);
+         _loc11_ = getTimer();
          ingredientShop = roadLayer.mc_ingredientShop;
          ingredientShop.buttonMode = true;
          ingredientShop.toolTip = new ToolTip(ingredientShop,GameWorld.textHandler.getTextFromId("ToolTipIngredientMarket"));
@@ -1942,6 +2053,8 @@ package com.playfish.games.cooking
             }
             _loc1_++;
          }
+         PerfTrace.slow("WorldRestaurantPlay.init employee ownership refresh",_loc11_,5);
+         _loc11_ = getTimer();
          if(DEBUG_PLAYER)
          {
             debugPlayer = new AvatarActor(0,0,new GameUser(null),this,[Avatar3D.ANIMATION_IDLE,Avatar3D.ANIMATION_WALK]);
@@ -1972,12 +2085,16 @@ package com.playfish.games.cooking
             mailItem.buttonMode = true;
          }
          refreshDemand();
+         PerfTrace.slow("WorldRestaurantPlay.init HUD handlers",_loc11_,5);
+         _loc11_ = getTimer();
          _loc1_ = 0;
          while(_loc1_ < gameUser.trashCount.value)
          {
             addRandomTrash();
             _loc1_++;
          }
+         PerfTrace.slow("WorldRestaurantPlay.init trash count=" + gameUser.trashCount.value,_loc11_,5);
+         _loc11_ = getTimer();
          _loc1_ = 0;
          while(_loc1_ < trees.length)
          {
@@ -1988,11 +2105,15 @@ package com.playfish.games.cooking
             }
             _loc1_++;
          }
+         PerfTrace.slow("WorldRestaurantPlay.init trees",_loc11_,5);
+         _loc11_ = getTimer();
          if(!visitMode)
          {
             refreshEmployeeCount();
             refreshMails();
          }
+         PerfTrace.slow("WorldRestaurantPlay.init employee/mail refresh",_loc11_,5);
+         _loc11_ = getTimer();
          if(visitMode && WorldStreet.streetType == WorldStreet.STREET_TYPE_FRIENDS)
          {
             if(!alreadyHelpedCurrentFriend() && !maxActivitesForTodayReached())
@@ -2011,6 +2132,8 @@ package com.playfish.games.cooking
                }
             }
          }
+         PerfTrace.slow("WorldRestaurantPlay.init visit activity",_loc11_,5);
+         _loc11_ = getTimer();
          gameUser.refreshBedStatusForRestingEmployees();
          _loc1_ = 0;
          while(_loc1_ < gameUser.employeeUsers.length)
@@ -2019,11 +2142,15 @@ package com.playfish.games.cooking
             createEmployeeActor(_loc10_);
             _loc1_++;
          }
+         PerfTrace.slow("WorldRestaurantPlay.init create employees",_loc11_,5);
+         _loc11_ = getTimer();
          refreshRestaurantClosedState();
          if(!visitMode)
          {
             addRestaurantExtension(new TutorialExtension(this));
          }
+         PerfTrace.slow("WorldRestaurantPlay.init final extensions",_loc11_,5);
+         PerfTrace.mark("WorldRestaurantPlay.init end chairs=" + chairs.length + " kitchens=" + kitchens.length + " employees=" + gameUser.employeeUsers.length);
       }
       
       private function hasValidEntrances() : Boolean
@@ -2070,6 +2197,8 @@ package com.playfish.games.cooking
       
       override public function hideNotify() : void
       {
+         var _loc1_:int = getTimer();
+         PerfTrace.mark("WorldRestaurantPlay.hideNotify begin");
          super.hideNotify();
          if(visitMode)
          {
@@ -2089,6 +2218,7 @@ package com.playfish.games.cooking
          }
          instance = null;
          Engine.instance.stage.removeEventListener(Event.FULLSCREEN,onFullScreen);
+         PerfTrace.slow("WorldRestaurantPlay.hideNotify end",_loc1_,5);
       }
       
       public function addTrashObject(param1:String, param2:int, param3:int) : void

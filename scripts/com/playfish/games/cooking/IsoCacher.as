@@ -117,8 +117,9 @@ package com.playfish.games.cooking
          var _loc1_:DisplayObjectContainer = view.session.getContainer(view) as DisplayObjectContainer;
          var _loc2_:DisplayObject = _loc1_.getChildAt(0);
          var _loc3_:Rectangle = _loc2_.getRect(null);
+         var _loc6_:Rectangle = _loc2_.getRect(_loc2_);
          var _loc4_:BitmapData = new BitmapData(Math.max(1,_loc3_.width),Math.max(1,_loc3_.height),true,0);
-         _loc4_.draw(view,new Matrix(1,0,0,1,-_loc3_.left,-_loc3_.top));
+         _loc4_.draw(_loc2_,new Matrix(1,0,0,1,-_loc6_.left,-_loc6_.top));
          view.clear();
          view.visible = false;
          var _loc5_:Object = new Object();

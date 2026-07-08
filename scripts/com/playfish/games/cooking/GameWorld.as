@@ -4,6 +4,7 @@ package com.playfish.games.cooking
    import away3d.containers.View3D;
    import away3d.lights.DirectionalLight3D;
    import away3d.loaders.Collada;
+   import away3d.materials.MovieMaterial;
    import com.playfish.coretech.platform.socialplatform.SocialFeed;
    import com.playfish.coretech.platform.socialplatform.SocialPlatform;
    import com.playfish.coretech.platform.socialplatform.SocialPlatformFeeds;
@@ -1226,10 +1227,14 @@ package com.playfish.games.cooking
          var _loc9_:int = 0;
          var _loc10_:int = 0;
          var _loc11_:Recipe = null;
+         var _loc12_:int = getTimer();
+         PerfTrace.mark("GameWorld.start begin");
          settingOverlay = new OverlaySetting();
          Engine.instance.addChild(settingOverlay);
+         PerfTrace.slow("GameWorld.start overlay/debug",_loc12_,5);
          Debug.init();
          ProtectedInt.addEventListener(ProtectedInt.EVENT_CHECKSUM_MISMATCH,onProtectedIntChecksumMismatch);
+         _loc12_ = getTimer();
          if(bestFriendListFromSocialStats)
          {
             _loc2_ = 0;
@@ -1244,6 +1249,8 @@ package com.playfish.games.cooking
                _loc2_++;
             }
          }
+         PerfTrace.slow("GameWorld.start best friends",_loc12_,5);
+         _loc12_ = getTimer();
          _loc2_ = 0;
          while(_loc2_ < newsletterHandler.ids.length)
          {
@@ -1257,6 +1264,8 @@ package com.playfish.games.cooking
             _loc6_.newsletterId = newsletterHandler.ids[_loc2_];
             _loc2_++;
          }
+         PerfTrace.slow("GameWorld.start newsletters",_loc12_,5);
+         _loc12_ = getTimer();
          gameUser.refreshBedStatusForRestingEmployees();
          maxEmployees = LEVEL_THRESHOLDS[gameUser.level.value].employees;
          if(gameUser.userInfo.playCount > 1 && gameUser.level.value > 0)
@@ -1301,6 +1310,8 @@ package com.playfish.games.cooking
             gameUser.bannerText = gameUser.firstName;
             stopGlobalRpcs();
          }
+         PerfTrace.slow("GameWorld.start offline/profile repair",_loc12_,5);
+         _loc12_ = getTimer();
          if(hiredFriendsPanel == null)
          {
             hiredFriendsPanel = new WorldHiredFriendsPanel(gameUser,maxEmployees);
@@ -1309,6 +1320,8 @@ package com.playfish.games.cooking
             hiredFriendsPanel.y = Engine.STAGE_HEIGHT;
             hiredFriendsPanel.hide();
          }
+         PerfTrace.slow("GameWorld.start hired friends panel",_loc12_,5);
+         _loc12_ = getTimer();
          var _loc1_:Array = getPlayingFriendUsers();
          friendsListPanel = new WorldFriendsList(_loc1_);
          friendsListPanel.y = Engine.STAGE_HEIGHT;
@@ -1318,6 +1331,8 @@ package com.playfish.games.cooking
             GameWorld.cashPanel = new CashPanel();
             GameWorld.cashPanel.drawPriority = 10000;
          }
+         PerfTrace.slow("GameWorld.start panels",_loc12_,5);
+         _loc12_ = getTimer();
          Engine.instance.stage.addEventListener(MouseEvent.MOUSE_MOVE,onStageMouseMove,false,0,true);
          Engine.instance.stage.addEventListener(Event.FULLSCREEN,onFullScreen,false,0,true);
          WorldStreet.streetType = WorldStreet.STREET_TYPE_FRIENDS;
@@ -1325,7 +1340,9 @@ package com.playfish.games.cooking
          WorldStreet.streetUserList = friendsListPanel;
          Engine.setActiveWorld(new WorldStreet(gameUser,true));
          setBlackSheepItems();
-      }
+         PerfTrace.slow("GameWorld.start street/setBlackSheep",_loc12_,5);
+         PerfTrace.mark("GameWorld.start end");
+       }
       
       public static function getItemType(param1:int) : int
       {
@@ -1823,10 +1840,25 @@ package com.playfish.games.cooking
          _loc2_ = param1.fileLoader.getBytes("model_bin");
          _loc2_.uncompress();
          baseModel = Collada.parse(_loc2_,{"materials":{
-            "tray":"Tray",
-            "cleaner":"Cleaner",
-            "repair":"Repair"
+            "tray":Engine.getMovieClip("Tray") || "Tray",
+            "cleaner":Engine.getMovieClip("Cleaner") || "Cleaner",
+            "repair":Engine.getMovieClip("Repair") || "Repair"
          }});
+         var propMaterialClip:MovieClip = Engine.getMovieClip("Tray");
+         if(propMaterialClip != null && baseModel.materialLibrary.getMaterial("tray") != null)
+         {
+            baseModel.materialLibrary.getMaterial("tray").material = new MovieMaterial(propMaterialClip);
+         }
+         propMaterialClip = Engine.getMovieClip("Cleaner");
+         if(propMaterialClip != null && baseModel.materialLibrary.getMaterial("cleaner") != null)
+         {
+            baseModel.materialLibrary.getMaterial("cleaner").material = new MovieMaterial(propMaterialClip);
+         }
+         propMaterialClip = Engine.getMovieClip("Repair");
+         if(propMaterialClip != null && baseModel.materialLibrary.getMaterial("repair") != null)
+         {
+            baseModel.materialLibrary.getMaterial("repair").material = new MovieMaterial(propMaterialClip);
+         }
          baseCustomiseAvatarModel = ObjectContainer3D(baseModel.cloneAll());
          placeholderUser = new GameUser(null);
          placeholderUser.skinColour = 16777215;

@@ -237,10 +237,16 @@ package com.playfish.games.cooking
       
       public function WorldRestaurant(param1:GameUser)
       {
+         var _loc2_:int = getTimer();
+         PerfTrace.mark("WorldRestaurant constructor begin");
          super();
          this.gameUser = param1;
          init();
+         PerfTrace.slow("WorldRestaurant init",_loc2_,5);
+         _loc2_ = getTimer();
          addRestaurantExtension(new OutsideArea(this));
+         PerfTrace.slow("WorldRestaurant OutsideArea",_loc2_,5);
+         PerfTrace.mark("WorldRestaurant constructor end");
       }
       
       public static function paintGrid(param1:Shape, param2:int, param3:int, param4:int, param5:int, param6:int, param7:int = -1, param8:Number = 1) : void
@@ -446,6 +452,8 @@ package com.playfish.games.cooking
          var _loc10_:int = 0;
          var _loc11_:int = 0;
          var _loc12_:Array = null;
+         var _loc13_:int = getTimer();
+         PerfTrace.mark("WorldRestaurant.init begin");
          room = new BaseObject();
          room.graphics.beginFill(11788396);
          room.graphics.drawRect(-2000,-2000,4000,4000);
@@ -454,6 +462,8 @@ package com.playfish.games.cooking
          roadLayer = Engine.getMovieClip("Road");
          roadLayer.cacheAsBitmap = true;
          room.addChild(roadLayer);
+         PerfTrace.slow("WorldRestaurant.init road",_loc13_,5);
+         _loc13_ = getTimer();
          floorLayer = new Sprite();
          room.addChild(floorLayer);
          baseFloor = new Shape();
@@ -476,6 +486,8 @@ package com.playfish.games.cooking
             }
             _loc2_++;
          }
+         PerfTrace.slow("WorldRestaurant.init road trees",_loc13_,5);
+         _loc13_ = getTimer();
          billboard = new Billboard(0,0,this);
          room.addObject(billboard);
          var _loc3_:int = gameUser.level.value;
@@ -496,11 +508,15 @@ package com.playfish.games.cooking
             _loc6_.getChildMovieClipInstance("mc_plot" + _loc2_).visible = false;
             _loc2_++;
          }
+         PerfTrace.slow("WorldRestaurant.init garden plots",_loc13_,5);
+         _loc13_ = getTimer();
          setRoomSize(_loc4_,_loc5_);
          if(gameUser.outsideAreaSizeItems.length > 0)
          {
             setOutsideAreaSize(gameUser.outsideAreaSizeItems[0].sizeX,gameUser.outsideAreaSizeItems[0].sizeY);
          }
+         PerfTrace.slow("WorldRestaurant.init room size",_loc13_,5);
+         _loc13_ = getTimer();
          room.x = canvasWidth / 2;
          room.y = tileHeight * 2;
          _loc2_ = 0;
@@ -514,6 +530,7 @@ package com.playfish.games.cooking
             _loc10_ = gameUser.activeFloorIndex;
             _loc11_ = _loc10_ + 1;
             loadRoom(gameUser,_loc10_,_loc11_);
+            PerfTrace.slow("WorldRestaurant.init loadRoom",_loc13_,5);
          }
          else
          {
@@ -525,7 +542,9 @@ package com.playfish.games.cooking
                placeDefaultRoomItem(_loc12_[_loc2_],_loc12_[_loc2_].tileX,_loc12_[_loc2_].tileY);
                _loc2_++;
             }
+            PerfTrace.slow("WorldRestaurant.init defaults",_loc13_,5);
          }
+         _loc13_ = getTimer();
          buttonLayer = new BaseObject();
          buttonLayer.drawPriority = 20000;
          addObject(buttonLayer);
@@ -533,6 +552,8 @@ package com.playfish.games.cooking
          room.addEventListener(MouseEvent.MOUSE_UP,onWorldMouseUp);
          room.addEventListener(MouseEvent.ROLL_OUT,onWorldMouseUp);
          GameWorld.gameEventDispatcher.addEventListener(GameEvent.LEVEL_UP,onLevelUp,false,0,true);
+         PerfTrace.slow("WorldRestaurant.init listeners",_loc13_,5);
+         PerfTrace.mark("WorldRestaurant.init end placedItems=" + placedItems.length + " trees=" + trees.length);
       }
       
       override public function destroy() : void
@@ -1537,10 +1558,14 @@ package com.playfish.games.cooking
          var _loc6_:UserItem = null;
          var _loc7_:int = 0;
          var _loc8_:* = 0;
+         var _loc9_:int = getTimer();
+         PerfTrace.mark("WorldRestaurant.loadRoom begin usedItems=" + param1.usedRestaurantItems.length + " active=" + param2 + " outside=" + param3);
          this.activeRoomIndex = param2;
          this.activeOutsideAreaRoomIndex = param3;
          removeAllItems();
          addDefaultWalls();
+         PerfTrace.slow("WorldRestaurant.loadRoom clear/defaultWalls",_loc9_,5);
+         _loc9_ = getTimer();
          var _loc4_:Array = new Array();
          for each(_loc6_ in param1.usedRestaurantItems)
          {
@@ -1600,6 +1625,8 @@ package com.playfish.games.cooking
                }
             }
          }
+         PerfTrace.slow("WorldRestaurant.loadRoom create/filter pending=" + _loc4_.length + " placed=" + placedItems.length,_loc9_,5);
+         _loc9_ = getTimer();
          _loc7_ = 0;
          _loc8_ = int(_loc4_.length - 1);
          while(_loc8_ >= 0)
@@ -1612,12 +1639,18 @@ package com.playfish.games.cooking
             }
             _loc8_--;
          }
+         PerfTrace.slow("WorldRestaurant.loadRoom stackable surfaces pending=" + _loc4_.length + " placed=" + placedItems.length,_loc9_,5);
+         _loc9_ = getTimer();
          for each(_loc5_ in _loc4_)
          {
             placeItemInRoom(_loc5_,_loc5_.roomTileX,_loc5_.roomTileY,_loc5_.roomIndex);
          }
+         PerfTrace.slow("WorldRestaurant.loadRoom remaining items placed=" + placedItems.length,_loc9_,5);
+         _loc9_ = getTimer();
          paintMainFloorMap();
          paintOutsideAreaFloorMap();
+         PerfTrace.slow("WorldRestaurant.loadRoom paint floor maps",_loc9_,5);
+         PerfTrace.mark("WorldRestaurant.loadRoom end placedItems=" + placedItems.length);
       }
       
       private function placeDefaultRoomItem(param1:RoomItem, param2:int, param3:int) : void

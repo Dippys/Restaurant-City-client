@@ -399,6 +399,8 @@ package com.playfish.games.cooking
       private function onCommitSuccess(param1:RpcEvent) : void
       {
          Debug.out("onCommitOK");
+         shopTransactionHandler.removeEventListener(RpcEvent.SUCCESS,onCommitSuccess);
+         shopTransactionHandler.removeEventListener(RpcEvent.FAIL,onCommitFail);
          buttonPlay.removeEventListener(MouseEvent.CLICK,playClicked);
          var _loc2_:WorldRestaurantPlay = new WorldRestaurantPlay(gameUser);
          _loc2_.room.x = room.x;
@@ -463,6 +465,8 @@ package com.playfish.games.cooking
       private function onCommitFail(param1:RpcEvent) : void
       {
          Debug.out("onCommitFail");
+         shopTransactionHandler.removeEventListener(RpcEvent.SUCCESS,onCommitSuccess);
+         shopTransactionHandler.removeEventListener(RpcEvent.FAIL,onCommitFail);
       }
       
       public function placeCurrentItem() : Boolean
@@ -687,7 +691,10 @@ package com.playfish.games.cooking
          shopTransactionHandler.addEventListener(RpcEvent.FAIL,onCommitFail,false,0,true);
          if(isRestaurantChanged())
          {
-            shopTransactionHandler.commit();
+            if(!shopTransactionHandler.commit())
+            {
+               onCommitSuccess(null);
+            }
          }
          else
          {

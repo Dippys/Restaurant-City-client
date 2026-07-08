@@ -324,21 +324,39 @@ package com.playfish.games.cooking
       
       public static function setActiveWorld(param1:BaseWorld) : void
       {
+         var _loc2_:int = getTimer();
+         var _loc3_:int = 0;
+         PerfTrace.mark("setActiveWorld begin " + param1);
          if(curWorld != null)
          {
+            _loc3_ = getTimer();
             curWorld.hideNotify();
+            PerfTrace.slow("setActiveWorld old hideNotify " + curWorld,_loc3_,5);
+            _loc3_ = getTimer();
             worldContainer.removeObject(curWorld);
+            PerfTrace.slow("setActiveWorld old removeObject " + curWorld,_loc3_,5);
             curWorld = null;
          }
          curWorld = param1;
          if(curWorld != null)
          {
+            _loc3_ = getTimer();
             curWorld.drawPriority = -1;
+            PerfTrace.slow("setActiveWorld drawPriority " + curWorld,_loc3_,5);
+            _loc3_ = getTimer();
             worldContainer.addObject(curWorld);
+            PerfTrace.slow("setActiveWorld worldContainer.addObject " + curWorld,_loc3_,5);
+            _loc3_ = getTimer();
             instance.stage.focus = curWorld;
+            PerfTrace.slow("setActiveWorld stage.focus " + curWorld,_loc3_,5);
+            _loc3_ = getTimer();
             curWorld.showNotify();
+            PerfTrace.slow("setActiveWorld showNotify " + curWorld,_loc3_,5);
          }
+         _loc3_ = getTimer();
          resetKeys();
+         PerfTrace.slow("setActiveWorld resetKeys " + param1,_loc3_,5);
+         PerfTrace.slow("setActiveWorld end " + param1,_loc2_,5);
       }
       
       public static function setFullScreen(param1:Boolean, param2:Number = -1, param3:Number = -1) : void
@@ -375,19 +393,25 @@ package com.playfish.games.cooking
       public static function getMovieClip(param1:String) : MovieClip
       {
          var mcClass:Class = null;
+         var started:int = 0;
+         var result:MovieClip = null;
          var name:String = param1;
+         started = getTimer();
          try
          {
             mcClass = Class(getDefinitionByName(name));
             if(mcClass != null)
             {
-               return new mcClass();
+               result = new mcClass();
+               PerfTrace.slow("getMovieClip " + name,started);
+               return result;
             }
          }
          catch(ex:Error)
          {
             Debug.out(ex.getStackTrace());
          }
+         PerfTrace.slow("getMovieClip failed " + name,started);
          return null;
       }
       
@@ -440,12 +464,14 @@ package com.playfish.games.cooking
       
       private function onPreloadComplete(param1:Event) : void
       {
+         PerfTrace.mark("Engine.onPreloadComplete begin");
          Debug.out("preloadComplete");
          gameInitLoader.destroy();
          gameInitLoader = null;
          stage.addEventListener(Event.ENTER_FRAME,tick);
          lastTickTime = new Date().time;
          GameWorld.start();
+         PerfTrace.mark("Engine.onPreloadComplete after GameWorld.start");
       }
       
       private function tick(param1:Event) : void
@@ -474,6 +500,7 @@ package com.playfish.games.cooking
       
       private function init(param1:Event) : void
       {
+         PerfTrace.mark("Engine.init begin");
          initialize();
          stageWidth = STAGE_WIDTH;
          stageHeight = STAGE_HEIGHT;
@@ -515,6 +542,7 @@ package com.playfish.games.cooking
             fpsTextField.mouseEnabled = false;
             addChild(fpsTextField);
          }
+         PerfTrace.mark("Engine.init end");
       }
       
       public function getTotalLoadingBytes() : int

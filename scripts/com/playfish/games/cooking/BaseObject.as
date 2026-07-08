@@ -4,6 +4,7 @@ package com.playfish.games.cooking
    import flash.events.*;
    import flash.geom.Matrix;
    import flash.text.*;
+   import flash.utils.*;
    
    public dynamic class BaseObject extends Sprite
    {
@@ -49,6 +50,7 @@ package com.playfish.games.cooking
       {
          var _loc2_:Boolean = false;
          var _loc3_:int = 0;
+         var _loc4_:int = 0;
          if(param1 != null)
          {
             if(newObjects.indexOf(param1) == -1)
@@ -63,7 +65,9 @@ package com.playfish.games.cooking
                {
                   if(param1.drawPriority < newObjects[_loc3_].drawPriority)
                   {
+                     _loc4_ = getTimer();
                      addChildAt(param1,getChildIndex(newObjects[_loc3_]));
+                     PerfTrace.slow("BaseObject.addObject addChildAt " + param1,_loc4_,5);
                      newObjects.splice(_loc3_,0,param1);
                      _loc2_ = true;
                      break;
@@ -73,7 +77,9 @@ package com.playfish.games.cooking
                if(!_loc2_)
                {
                   newObjects.push(param1);
+                  _loc4_ = getTimer();
                   addChild(param1);
+                  PerfTrace.slow("BaseObject.addObject addChild " + param1,_loc4_,5);
                }
             }
          }

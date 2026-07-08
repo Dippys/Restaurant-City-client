@@ -141,6 +141,8 @@ package com.playfish.games.cooking
       
       public function WorldStreet(param1:GameUser, param2:Boolean, param3:Boolean = false)
       {
+         var _loc4_:int = getTimer();
+         PerfTrace.mark("WorldStreet begin intro=" + param2 + " zoomOut=" + param3 + " users=" + (streetUsers == null ? 0 : streetUsers.length));
          super();
          this.targetUser = param1;
          this.intro = param2;
@@ -152,6 +154,8 @@ package com.playfish.games.cooking
             state = STATE_ZOOMING_OUT;
          }
          init(null);
+         PerfTrace.slow("WorldStreet constructor/init",_loc4_,5);
+         PerfTrace.mark("WorldStreet end");
       }
       
       private function onButtonOptInClick(param1:MouseEvent) : void
@@ -564,6 +568,8 @@ package com.playfish.games.cooking
       
       override public function hideNotify() : void
       {
+         var _loc2_:int = getTimer();
+         PerfTrace.mark("WorldStreet.hideNotify begin actors=" + actors.length);
          var _loc1_:Number = actors.length - 1;
          while(_loc1_ >= 0)
          {
@@ -581,6 +587,7 @@ package com.playfish.games.cooking
          userFaceBitmaps.releaseAll();
          bgMusic.stop();
          Engine.instance.stage.removeEventListener(Event.FULLSCREEN,onFullScreen);
+         PerfTrace.slow("WorldStreet.hideNotify end",_loc2_,5);
       }
       
       private function searchUsers(param1:String) : Array
@@ -882,7 +889,8 @@ package com.playfish.games.cooking
             {
                sceneLayer.scaleX = 4;
                sceneLayer.scaleY = 4;
-               Engine.setActiveWorld(new WorldRestaurantPlay(GameWorld.gameUser));
+                PerfTrace.mark("WorldStreet entering restaurant");
+                Engine.setActiveWorld(new WorldRestaurantPlay(GameWorld.gameUser));
             }
          }
          else if(state == STATE_ZOOMING_OUT_FROM_RESTAURANT)
@@ -904,6 +912,8 @@ package com.playfish.games.cooking
       
       override public function showNotify() : void
       {
+         var _loc1_:int = getTimer();
+         PerfTrace.mark("WorldStreet.showNotify begin intro=" + intro);
          if(!intro)
          {
             curUserList.refresh();
@@ -915,6 +925,7 @@ package com.playfish.games.cooking
          Engine.instance.stage.addEventListener(Event.FULLSCREEN,onFullScreen,false,0,true);
          onFullScreen(null);
          bgMusic.play(-1);
+         PerfTrace.slow("WorldStreet.showNotify end",_loc1_,5);
       }
       
       private function onInviteClick(param1:MouseEvent) : void
@@ -1048,6 +1059,11 @@ package com.playfish.games.cooking
       
       public function restaurantDesignerClicked(param1:MouseEvent) : void
       {
+         if(playerBuilding == null)
+         {
+            Debug.out("WorldStreet.restaurantDesignerClicked: player building is missing from street roster");
+            return;
+         }
          if(buttonLayer.buttonRestaurantDesigner)
          {
             buttonLayer.buttonRestaurantDesigner.removeEventListener(MouseEvent.CLICK,restaurantDesignerClicked);

@@ -117,6 +117,7 @@ package com.playfish.games.cooking
          this.prevBannerText = GameWorld.gameUser.bannerText;
          this.parallaxBg = param4;
          this.building = param2;
+         refreshBodyPreviewTile();
          bgRoad = new Shape();
          bgSky = Engine.getMovieClip("StreetSky");
          refreshBgRoad();
@@ -612,6 +613,11 @@ package com.playfish.games.cooking
             }
          }
          building.addItem(param1);
+         if(param1.wallTile)
+         {
+            refreshBodyPreviewTile();
+            itemChooser.refresh();
+         }
          if(param1.draggable && !param1.wallTile)
          {
             param1.buttonMode = true;
@@ -622,6 +628,14 @@ package com.playfish.games.cooking
             {
                param1.addEventListener(MouseEvent.ROLL_OVER,onItemRollOver,false,0,true);
             }
+         }
+      }
+      
+      private function refreshBodyPreviewTile() : void
+      {
+         if(Boolean(building) && Boolean(building.tile) && Boolean(building.tile.itemConfig))
+         {
+            ItemChooser.currentBuildingTileClassName = building.tile.itemConfig.className;
          }
       }
       

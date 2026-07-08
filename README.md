@@ -1,4 +1,4 @@
-# Restaurant City `game.swf` — decompiled & rebuildable source
+﻿# Restaurant City `game.swf` — decompiled & rebuildable source
 
 Full ActionScript 3 decompilation of `game.swf` (Restaurant City 0.9.143a),
 set up as a buildable project that recompiles **byte-complete** back to a SWF.

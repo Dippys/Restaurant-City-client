@@ -2,6 +2,7 @@ package com.playfish.games.cooking.ui
 {
    import com.playfish.games.cooking.*;
    import com.playfish.games.cooking.events.*;
+   import com.playfish.rpc.share.NetworkUid;
    import flash.display.*;
    import flash.events.*;
    
@@ -17,7 +18,7 @@ package com.playfish.games.cooking.ui
       public var curUser:GameUserEmployee;
       
       private var restaurant:WorldRestaurantPlay;
-      
+       
       private var faceImage:DisplayObject;
       
       public function WorldEmployeePopUp(param1:GameUserEmployee, param2:WorldRestaurantPlay)
@@ -44,14 +45,13 @@ package com.playfish.games.cooking.ui
             contentPanel.mc_giftFood.mc_new.visible = false;
          }
          setButtonMode(contentPanel.mc_fire,true);
-         setButtonMode(contentPanel.mc_cancel,true);
-         setButtonMode(contentPanel.mc_prev,true);
-         setButtonMode(contentPanel.mc_next,true);
-         contentPanel.mc_cancel.addEventListener(MouseEvent.CLICK,onButtonCancelClick,false,0,true);
-         contentPanel.mc_fire.addEventListener(MouseEvent.CLICK,onButtonFireClick,false,0,true);
-         contentPanel.mc_prev.addEventListener(MouseEvent.CLICK,onButtonPrevClick,false,0,true);
-         contentPanel.mc_next.addEventListener(MouseEvent.CLICK,onButtonNextClick,false,0,true);
-         setUser(param1);
+          setButtonMode(contentPanel.mc_cancel,true);
+          setButtonMode(contentPanel.mc_prev,true);
+          setButtonMode(contentPanel.mc_next,true);
+          contentPanel.mc_cancel.addEventListener(MouseEvent.CLICK,onButtonCancelClick,false,0,true);
+          contentPanel.mc_prev.addEventListener(MouseEvent.CLICK,onButtonPrevClick,false,0,true);
+          contentPanel.mc_next.addEventListener(MouseEvent.CLICK,onButtonNextClick,false,0,true);
+          setUser(param1);
       }
       
       private function onButtonFireClick(param1:MouseEvent) : void
@@ -77,8 +77,9 @@ package com.playfish.games.cooking.ui
       
       override public function show() : void
       {
-         super.show();
-         safeGotoAndPlay(scene,"in");
+          super.show();
+          safeGotoAndPlay(scene,"in");
+          refreshActionButtons();
       }
       
       private function safeGotoAndPlay(param1:MovieClip, param2:String) : void
@@ -152,14 +153,15 @@ package com.playfish.games.cooking.ui
             contentPanel.mc_outfit.addEventListener(MouseEvent.CLICK,onOutfitClick,false,0,true);
          }
          contentPanel.mc_outfit.mc_new.mouseEnabled = false;
-         if(!GameWorld.firstTimeAccess(GameWorld.FIRST_TIME_ACCESS_BIT_EMPLOYEE_OUTFIT))
-         {
-            contentPanel.mc_outfit.mc_new.visible = false;
-         }
-         if(param1.gameUser != GameWorld.gameUser && param1.gameUser.userInfo.playCount > 0 && GameWorld.isFriendUser(param1.gameUser))
-         {
-            contentPanel.mc_restaurant.visible = true;
-            GameWorld.textHandler.setReplaceString("friend",curUser.gameUser.firstName);
+          if(!GameWorld.firstTimeAccess(GameWorld.FIRST_TIME_ACCESS_BIT_EMPLOYEE_OUTFIT))
+          {
+             contentPanel.mc_outfit.mc_new.visible = false;
+          }
+          refreshActionButtons();
+          if(isGiftableFriendEmployee())
+          {
+             contentPanel.mc_restaurant.visible = true;
+             GameWorld.textHandler.setReplaceString("friend",curUser.gameUser.firstName);
             if(contentPanel.mc_restaurant.toolTip == null)
             {
                contentPanel.mc_restaurant.toolTip = new ToolTip(contentPanel.mc_restaurant,GameWorld.textHandler.getTextFromId("ToolTipFriendsRestaurant"));
@@ -183,13 +185,121 @@ package com.playfish.games.cooking.ui
          GameWorld.hiredFriendsPanel.setHappinessIcon(contentPanel.mc_happiness.mc_happinessIcon,curUser);
       }
       
-      private function onButtonCancelClick(param1:MouseEvent) : void
+       private function onButtonCancelClick(param1:MouseEvent) : void
+       {
+          remove();
+       }
+      
+      private function isCurrentPlayerEmployee() : Boolean
       {
-         remove();
+         if(curUser == null || curUser.gameUser == null || curUser.gameUser.userInfo == null)
+         {
+            return false;
+         }
+         if(GameWorld.gameUser == null || GameWorld.gameUser.userInfo == null)
+         {
+            return false;
+         }
+         return NetworkUid.areEqual(curUser.gameUser.userInfo.id,GameWorld.gameUser.userInfo.id);
       }
       
-      private function onGiftClick(param1:MouseEvent) : void
+      private function isGiftableFriendEmployee() : Boolean
       {
+         return !isCurrentPlayerEmployee() && curUser.gameUser.userInfo.playCount > 0 && GameWorld.isFriendUser(curUser.gameUser);
+      }
+      
+      private function refreshActionButtons() : void
+      {
+         var _loc1_:Boolean = !isCurrentPlayerEmployee();
+         setActionVisible(contentPanel.mc_fire,_loc1_);
+         contentPanel.mc_fire.removeEventListener(MouseEvent.CLICK,onButtonFireClick);
+         if(_loc1_)
+         {
+            contentPanel.mc_fire.addEventListener(MouseEvent.CLICK,onButtonFireClick,false,0,true);
+          }
+          var _loc2_:Boolean = isGiftableFriendEmployee();
+          setActionVisible(contentPanel.mc_giftFood,_loc2_);
+          setActionVisible(getContentChild("mc_giftFoodBg"),_loc2_);
+          setActionVisible(getContentChild("mc_giftFoodLabel"),_loc2_);
+          if(contentPanel.mc_giftFood.mc_new)
+          {
+             contentPanel.mc_giftFood.mc_new.visible = false;
+         }
+         contentPanel.mc_giftFood.removeEventListener(MouseEvent.CLICK,onGiftClick);
+         if(_loc2_)
+         {
+            contentPanel.mc_giftFood.addEventListener(MouseEvent.CLICK,onGiftClick,false,0,true);
+         }
+      }
+      
+      private function getContentChild(param1:String) : DisplayObject
+      {
+         if(contentPanel == null)
+         {
+            return null;
+         }
+         return getDescendantByName(contentPanel,param1);
+      }
+      
+      private function getDescendantByName(param1:DisplayObjectContainer, param2:String) : DisplayObject
+      {
+         var _loc4_:DisplayObjectContainer = null;
+         var _loc5_:DisplayObject = null;
+         if(param1 == null)
+         {
+            return null;
+         }
+         var _loc3_:int = 0;
+         while(_loc3_ < param1.numChildren)
+         {
+            _loc5_ = param1.getChildAt(_loc3_);
+            if(_loc5_ == null)
+            {
+               _loc3_++;
+               continue;
+            }
+            if(_loc5_.name == param2)
+            {
+               return _loc5_;
+            }
+            if(_loc5_ is DisplayObjectContainer)
+            {
+               _loc4_ = DisplayObjectContainer(_loc5_);
+               _loc5_ = getDescendantByName(_loc4_,param2);
+               if(_loc5_ != null)
+               {
+                  return _loc5_;
+               }
+            }
+            _loc3_++;
+         }
+         return null;
+      }
+      
+      private function setActionVisible(param1:DisplayObject, param2:Boolean) : void
+      {
+         if(param1 == null)
+         {
+            return;
+         }
+         param1.visible = param2;
+         param1.alpha = param2 ? 1 : 0;
+         if(param1 is InteractiveObject)
+         {
+            InteractiveObject(param1).mouseEnabled = param2;
+         }
+         if(param1 is DisplayObjectContainer)
+         {
+            DisplayObjectContainer(param1).mouseChildren = param2;
+         }
+         if(param1 is MovieClip)
+         {
+            setButtonMode(MovieClip(param1),param2);
+         }
+      }
+       
+       private function onGiftClick(param1:MouseEvent) : void
+       {
          var _loc2_:GiftInviteFoodPopUp = new GiftInviteFoodPopUp();
          _loc2_.show();
          GameWorld.setFirstTimeAccess(GameWorld.FIRST_TIME_ACCESS_BIT_GIFT_INVITE_FOOD);
@@ -335,6 +445,7 @@ package com.playfish.games.cooking.ui
       override public function tick(param1:uint) : void
       {
          refreshHappiness();
+         refreshActionButtons();
       }
    }
 }

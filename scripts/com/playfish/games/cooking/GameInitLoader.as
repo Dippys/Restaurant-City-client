@@ -88,6 +88,7 @@ package com.playfish.games.cooking
          var _loc2_:LoaderInfo = LoaderInfo(param1.currentTarget);
          _loc2_.removeEventListener(Event.INIT,onSwfLoaded);
          --pendingSwfLoads;
+         PerfTrace.mark("SWF initialized, " + pendingSwfLoads + " remaining");
          Debug.out("swf initialized " + pendingSwfLoads + " remaining");
          if(pendingSwfLoads <= 0)
          {
@@ -106,6 +107,7 @@ package com.playfish.games.cooking
       
       public function onGameWorldInitSuccess() : void
       {
+         PerfTrace.mark("GameWorld.init success dispatch");
          Debug.out("onGameWorldInitSuccess");
          dispatchEvent(new Event(Event.COMPLETE));
       }
@@ -113,6 +115,7 @@ package com.playfish.games.cooking
       private function onAssetFilesLoaded(param1:Event) : void
       {
          var _loc4_:Loader = null;
+         PerfTrace.mark("asset files loaded, loading SWF bytes");
          Debug.out("onAssetFilesLoaded");
          var _loc2_:LoaderContext = new LoaderContext(false,ApplicationDomain.currentDomain);
          swfLoaders = new Array();
@@ -144,9 +147,11 @@ package com.playfish.games.cooking
       
       private function initGameWorld() : void
       {
+         PerfTrace.mark("GameInitLoader.initGameWorld begin");
          try
          {
             GameWorld.init(this);
+            PerfTrace.mark("GameInitLoader.initGameWorld returned");
          }
          catch(ex:Error)
          {
@@ -178,6 +183,7 @@ package com.playfish.games.cooking
       
       private function onRpcsSuccess(param1:RpcEvent) : void
       {
+         PerfTrace.mark("startup RPCs success");
          Debug.out("onRpcsSuccess");
          rpcsSuccess = true;
          onLoadSuccess();
@@ -192,6 +198,7 @@ package com.playfish.games.cooking
       {
          var i:int = 0;
          var e:Event = param1;
+         PerfTrace.mark("resource config complete");
          Debug.out("onResHandlerComplete");
          try
          {
@@ -233,6 +240,7 @@ package com.playfish.games.cooking
       
       private function onLoadSuccess() : void
       {
+         PerfTrace.mark("onLoadSuccess swfs=" + swfsSuccess + " rpcs=" + rpcsSuccess + " social=" + socialNetworkSuccess);
          Debug.out("onLoadSuccess " + swfsSuccess + " " + rpcsSuccess + " " + socialNetworkSuccess);
          if(swfsSuccess && rpcsSuccess && socialNetworkSuccess)
          {

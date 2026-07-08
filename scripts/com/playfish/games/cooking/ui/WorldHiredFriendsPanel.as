@@ -58,10 +58,15 @@ package com.playfish.games.cooking.ui
       
       public function WorldHiredFriendsPanel(param1:GameUser, param2:int)
       {
+         var _loc3_:int = 0;
+         var _loc4_:int = getTimer();
+         PerfTrace.mark("WorldHiredFriendsPanel begin employees=" + param1.employeeUsers.length + " max=" + param2);
          super();
          this.gameUser = param1;
          scene = Engine.getMovieClip("EmployeeBar2");
+         PerfTrace.slow("WorldHiredFriendsPanel EmployeeBar2",_loc4_,5);
          addChild(scene);
+         _loc4_ = getTimer();
          buttonLayer = Engine.getMovieClip("EmployeeBarButtonLayer");
          iconLayer = new Sprite();
          iconLayer.x = scene.mc_icon0.x;
@@ -71,8 +76,10 @@ package com.playfish.games.cooking.ui
          scrollLayer.keyboardEnabled = false;
          addObject(scrollLayer);
          addChild(buttonLayer);
+         PerfTrace.slow("WorldHiredFriendsPanel layers/buttons",_loc4_,5);
+         _loc4_ = getTimer();
          iconGap = scene.mc_icon2.x - scene.mc_icon1.x;
-         var _loc3_:int = 0;
+         _loc3_ = 0;
          while(_loc3_ < iconsPerScreen)
          {
             scene["mc_icon" + _loc3_].stop();
@@ -87,7 +94,11 @@ package com.playfish.games.cooking.ui
             addHiredUser(param1.employeeUsers[_loc3_],false);
             _loc3_++;
          }
+         PerfTrace.slow("WorldHiredFriendsPanel hired users",_loc4_,5);
+         _loc4_ = getTimer();
          refresh();
+         PerfTrace.slow("WorldHiredFriendsPanel refresh",_loc4_,5);
+         PerfTrace.mark("WorldHiredFriendsPanel end");
       }
       
       private function createInviteBars() : void
