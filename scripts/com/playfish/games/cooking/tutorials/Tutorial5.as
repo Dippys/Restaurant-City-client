@@ -113,6 +113,7 @@ package com.playfish.games.cooking.tutorials
                {
                   restaurant.addGourmetPoints(_loc5_);
                }
+               GameWorld.commitGlobalRpcs();
                remove();
                restaurant.displayGameStartUpPopUps();
                step = 6;

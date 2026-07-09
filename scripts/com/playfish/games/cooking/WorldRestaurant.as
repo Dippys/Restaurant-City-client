@@ -1401,7 +1401,9 @@ package com.playfish.games.cooking
                         _loc10_.parentItem = param1;
                         _loc10_.mouseEnabled = false;
                         _loc10_.mouseChildren = false;
+                        _loc10_.cacheAsBitmap = false;
                         _loc10_.blendMode = BlendMode.ERASE;
+                        _loc9_.cacheAsBitmap = false;
                         _loc9_.blendMode = BlendMode.LAYER;
                         if(_loc9_.doorMask == null)
                         {

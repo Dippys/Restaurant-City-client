@@ -22,6 +22,7 @@ package com.playfish.games.cooking
    import com.playfish.games.cooking.utils.*;
    import com.playfish.rpc.cooking.*;
    import com.playfish.rpc.share.NetworkUid;
+   import com.playfish.rpc.share.RpcResponseBase;
    import com.playfish.stream.*;
    import flash.display.*;
    import flash.events.*;
@@ -118,6 +119,8 @@ package com.playfish.games.cooking
       public static const FRIENDS_INVITE_POP_UP_CHANCE:Number = 0.05;
       
       public static const EMAIL_PERMISSION_REMINDER_POP_UP_CHANCE:Number = 0.5;
+      
+      private static const SERVER_ALERT_EVENT:uint = 1;
       
       public static const SHOP_UPDATE_DAY_IN_WEEK:int = 1;
       
@@ -1340,9 +1343,60 @@ package com.playfish.games.cooking
          WorldStreet.streetUserList = friendsListPanel;
          Engine.setActiveWorld(new WorldStreet(gameUser,true));
          setBlackSheepItems();
+         startServerEventDelivery();
          PerfTrace.slow("GameWorld.start street/setBlackSheep",_loc12_,5);
          PerfTrace.mark("GameWorld.start end");
        }
+      
+      public static function registerServerEvents() : void
+      {
+         try
+         {
+            rpcClient.registerEventType(SERVER_ALERT_EVENT,readServerAlertEvent);
+            rpcClient.setEventHandler(SERVER_ALERT_EVENT,showServerAlert);
+         }
+         catch(e:Error)
+         {
+            Debug.out("registerServerEvents failed: " + e);
+         }
+      }
+      
+      private static function startServerEventDelivery() : void
+      {
+         try
+         {
+            rpcClient.startEventDelivery(function():void
+            {
+               Debug.out("server event delivery stopped");
+            });
+         }
+         catch(e:Error)
+         {
+            Debug.out("startServerEventDelivery failed: " + e);
+         }
+      }
+      
+      private static function readServerAlertEvent(param1:RpcResponseBase, param2:Function) : Function
+      {
+         var title:String = param1.readString();
+         var body:String = param1.readString();
+         var handler:Function = param2;
+         return function():void
+         {
+            handler(title,body);
+         };
+      }
+      
+      private static function showServerAlert(param1:String, param2:String) : void
+      {
+         var _loc3_:MovieClip = Engine.getMovieClip("HelpPopup");
+         var _loc4_:MovieClip = _loc3_.mc_content;
+         textHandler.setTextField(_loc4_.tf_title,param1);
+         textHandler.setTextField(_loc4_.tf_body,param2,true);
+         var _loc5_:WorldPopUp = new WorldPopUp(_loc3_,_loc4_.mc_ok,null);
+         _loc5_.drawPriority = DRAW_PRIORITY_POP_UP;
+         _loc5_.queueToShow();
+      }
       
       public static function getItemType(param1:int) : int
       {

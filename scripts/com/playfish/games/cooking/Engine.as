@@ -524,6 +524,7 @@ package com.playfish.games.cooking
             flashVars = new URLVariables(Debug.NETWORK_TEST_FLASH_VARS);
          }
          GameWorld.rpcClient = new RpcClient(flashVars);
+         GameWorld.registerServerEvents();
          SocialNetwork.initialize();
          SocialPlatform.initialize();
          PFBillingSystem.create();
