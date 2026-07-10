@@ -578,39 +578,43 @@ package com.playfish.games.cooking
       {
          if(param1.roof)
          {
-            if(building.roof != null)
-            {
-               building.roof.fromInventory = false;
-               putItemInInventory(building.roof);
-               building.removeItem(building.roof);
-            }
+         if(building.roof != null)
+         {
+            building.roof.fromInventory = false;
+            gameUser.removeUsedBuildingItem(building.roof.serverUid);
+            putItemInInventory(building.roof);
+            building.removeItem(building.roof);
+         }
          }
          else if(param1.body)
          {
-            if(building.body != null)
-            {
-               building.body.fromInventory = false;
-               putItemInInventory(building.body);
-               removeItem(building.body);
-            }
+         if(building.body != null)
+         {
+            building.body.fromInventory = false;
+            gameUser.removeUsedBuildingItem(building.body.serverUid);
+            putItemInInventory(building.body);
+            removeItem(building.body);
+         }
          }
          else if(param1.wallTile)
          {
-            if(building.tile != null)
-            {
-               building.tile.fromInventory = false;
-               putItemInInventory(building.tile);
-               removeItem(building.tile);
-            }
+         if(building.tile != null)
+         {
+            building.tile.fromInventory = false;
+            gameUser.removeUsedBuildingItem(building.tile.serverUid);
+            putItemInInventory(building.tile);
+            removeItem(building.tile);
+         }
          }
          else if(param1.banner)
          {
-            if(building.banner != null)
-            {
-               building.banner.fromInventory = false;
-               putItemInInventory(building.banner);
-               removeItem(building.banner);
-            }
+         if(building.banner != null)
+         {
+            building.banner.fromInventory = false;
+            gameUser.removeUsedBuildingItem(building.banner.serverUid);
+            putItemInInventory(building.banner);
+            removeItem(building.banner);
+         }
          }
          building.addItem(param1);
          if(param1.wallTile)

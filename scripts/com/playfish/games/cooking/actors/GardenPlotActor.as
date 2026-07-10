@@ -203,10 +203,18 @@ package com.playfish.games.cooking.actors
       
       override public function tick(param1:uint) : void
       {
+         if(plot)
+         {
+            plot.tick(param1);
+         }
          if(Boolean(plot) && plot.updateFlag)
          {
             update();
             plot.updateFlag = false;
+            if(timeToolTip)
+            {
+               timeToolTip.refresh();
+            }
          }
       }
       

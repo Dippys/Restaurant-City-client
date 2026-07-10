@@ -218,6 +218,8 @@ package com.playfish.games.cooking
          var _loc3_:WorldInfoPopUp = null;
          var _loc4_:Recipe = null;
          var _loc5_:DishMaxLevelPopUp = null;
+         var _loc6_:IngredientItem = null;
+         var _loc7_:int = 0;
          Debug.out("onLevelUpSuccess");
          if((param1.successCode & RpcClient.SAVE_USER_PROFILE_FAIL_ADD_RECIPE) != 0)
          {
@@ -228,11 +230,20 @@ package com.playfish.games.cooking
          {
             _loc4_ = param2.recipe;
             ++_loc4_.level;
+            _loc7_ = 0;
+            while(_loc7_ < _loc4_.ingredientItems.length)
+            {
+               _loc6_ = _loc4_.ingredientItems[_loc7_];
+               gameUser.removeIngredient(_loc6_.itemConfig,_loc6_.count);
+               _loc7_++;
+            }
+            ingredientItemChooser.refresh(gameUser.ingredients);
             if(gameUser.getOwnedRecipe(_loc4_.config.id) == null)
             {
                gameUser.ownedRecipeItems.push(_loc4_);
             }
             setRecipeEntry(_loc4_.config,param2);
+            refreshRecipeButtons();
             param2.mc_recipe.mc_level.gotoAndPlay("level");
             if(_loc4_.level >= MAX_DISH_LEVEL)
             {

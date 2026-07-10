@@ -98,6 +98,23 @@ package com.playfish.games.cooking
          }
       }
       
+      public function tick(param1:uint) : void
+      {
+         var _loc2_:Number = NaN;
+         var _loc3_:Number = NaN;
+         if(ingredientId != -1 && !isFullyGrown())
+         {
+            _loc2_ = wetness;
+            _loc3_ = growTime;
+            wetness = Math.max(0,wetness - param1);
+            growTime = Math.min(GROW_TIME,growTime + param1);
+            if(wetness != _loc2_ || growTime != _loc3_)
+            {
+               updateFlag = true;
+            }
+         }
+      }
+      
       public function isFullyGrown() : Boolean
       {
          return ingredientId != -1 && growTime >= GROW_TIME;
