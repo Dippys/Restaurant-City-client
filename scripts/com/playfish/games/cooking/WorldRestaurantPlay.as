@@ -106,6 +106,8 @@ package com.playfish.games.cooking
       
       public var buttonMessage:MovieClip;
       
+      public var buttonDiscord:MovieClip;
+      
       public var cleaners:Array = new Array();
       
       public var coinPickUpSound:GameSound = new GameSound("SfxCoinPickUp",GameSound.TYPE_SOUND);
@@ -313,7 +315,7 @@ package com.playfish.games.cooking
       public function onButtonHireFriendsClick(param1:MouseEvent) : void
       {
          destroy();
-         GameWorld.fadeToWorld(new WorldHire());
+         WorldHire.open();
       }
       
       public function getSortedKitchens(param1:RoomItem) : Array
@@ -537,6 +539,50 @@ package com.playfish.games.cooking
             _loc2_ = new WorldMail();
             _loc2_.show();
          }
+      }
+      
+      private function initDiscordButton() : void
+      {
+         var _loc2_:Rectangle = null;
+         if(uiButton == null || buttonMessage == null)
+         {
+            return;
+         }
+         buttonDiscord = new MovieClip();
+         buttonDiscord.addChild(RcDiscordIcon.createIcon(46));
+         _loc2_ = buttonMessage.getBounds(uiButton);
+         buttonDiscord.x = _loc2_.x + _loc2_.width / 2 - 68;
+         buttonDiscord.y = _loc2_.y + _loc2_.height / 2;
+         setButtonMode(buttonDiscord,true);
+         buttonDiscord.toolTip = new ToolTip(buttonDiscord,"Join the Restaurant City Reborn Discord community!");
+         buttonDiscord.addEventListener(MouseEvent.CLICK,onDiscordButtonClick,false,0,true);
+         buttonDiscord.addEventListener(MouseEvent.ROLL_OVER,onDiscordButtonOver,false,0,true);
+         buttonDiscord.addEventListener(MouseEvent.ROLL_OUT,onDiscordButtonOut,false,0,true);
+         uiButton.addChild(buttonDiscord);
+      }
+      
+      private function onDiscordButtonOver(param1:MouseEvent) : void
+      {
+         if(buttonDiscord)
+         {
+            buttonDiscord.scaleX = 1.1;
+            buttonDiscord.scaleY = 1.1;
+         }
+      }
+      
+      private function onDiscordButtonOut(param1:MouseEvent) : void
+      {
+         if(buttonDiscord)
+         {
+            buttonDiscord.scaleX = 1;
+            buttonDiscord.scaleY = 1;
+         }
+      }
+      
+      public function onDiscordButtonClick(param1:MouseEvent) : void
+      {
+         var _loc2_:RcOpenDiscordPage = new RcOpenDiscordPage();
+         _loc2_.show();
       }
       
       private function onTrashMouseDown(param1:MouseEvent) : void
@@ -1842,6 +1888,7 @@ package com.playfish.games.cooking
             buttonMarket.addEventListener(MouseEvent.CLICK,onButtonMarketClick,false,0,true);
             buttonMusicPlayer.addEventListener(MouseEvent.CLICK,onButtonMusicPlayerClick,false,0,true);
             buttonBookmark.addEventListener(MouseEvent.CLICK,onButtonBookmarkClick,false,0,true);
+            initDiscordButton();
             buttonMarket.mc_new.mouseChildren = false;
             buttonMarket.tf_sale.mouseEnabled = false;
             if(!GameWorld.firstTimeAccess(GameWorld.FIRST_TIME_ACCESS_BIT_INGRADIANT_SHOP))

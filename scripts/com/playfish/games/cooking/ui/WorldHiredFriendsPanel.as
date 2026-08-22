@@ -578,7 +578,7 @@ package com.playfish.games.cooking.ui
             {
                WorldRestaurantPlay.instance.destroy();
             }
-            GameWorld.fadeToWorld(new WorldHire());
+            WorldHire.open();
          }
       }
       

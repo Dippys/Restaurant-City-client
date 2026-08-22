@@ -10,6 +10,7 @@ package com.playfish.games.cooking
    import com.playfish.rpc.share.RpcClientBase;
    import flash.display.*;
    import flash.events.*;
+   import flash.external.ExternalInterface;
    import flash.geom.Point;
    import flash.geom.Rectangle;
    import flash.media.*;
@@ -208,6 +209,28 @@ package com.playfish.games.cooking
          return instance.stage.displayState == StageDisplayState.FULL_SCREEN;
       }
       
+      /**
+       * RC Reborn: ground-truth fullscreen check. Ruffle's virtual
+       * stage.displayState can lag the actual browser fullscreen state, which
+       * breaks the in-game fullscreen button's toggle. Ask the page (which
+       * knows document.fullscreenElement) via ExternalInterface, falling back
+       * to the normal check when the bridge is unavailable.
+       */
+      public static function isBrowserFullScreen() : Boolean
+      {
+         try
+         {
+            if(ExternalInterface.available)
+            {
+               return ExternalInterface.call("rcIsFullscreen") == true;
+            }
+         }
+         catch(e:Error)
+         {
+         }
+         return isFullScreen();
+      }
+      
       public static function keyUpListener(param1:KeyboardEvent) : void
       {
          var _loc2_:int = translateKeyCode(param1.keyCode);
@@ -335,7 +358,38 @@ package com.playfish.games.cooking
             _loc3_ = getTimer();
             worldContainer.removeObject(curWorld);
             PerfTrace.slow("setActiveWorld old removeObject " + curWorld,_loc3_,5);
+            PerfTrace.mark("setActiveWorld detach snapshot before sync old=" + worldContainer.baseObjects.indexOf(curWorld) + " live=" + worldContainer.newObjects.indexOf(curWorld));
+            // BaseObject keeps a second, frame-stable child snapshot in
+            // baseObjects. removeObject() only updates newObjects immediately;
+            // the old world otherwise remains strongly reachable through the
+            // snapshot until the next tick, which is after the explicit GC
+            // boundary below. Synchronize it now so the detached restaurant is
+            // actually collectible during this transition.
+            _loc3_ = getTimer();
+            worldContainer.addAndRemoveObjects();
+            PerfTrace.slow("setActiveWorld old sync tick snapshot " + curWorld,_loc3_,5);
+            PerfTrace.mark("setActiveWorld detach snapshot after sync old=" + worldContainer.baseObjects.indexOf(curWorld));
+            // The stage focus is a strong runtime root. Clear it before the
+            // collection request; otherwise the outgoing restaurant (and an
+            // unfinished visit activity/task/display tree) is still reachable
+            // for this GC pass even after removeObject() and curWorld = null.
+            instance.stage.focus = null;
             curWorld = null;
+            // RC Reborn: a world owns every sound that was started while it
+            // was active. Ruffle keeps stopped/completed audio resources in
+            // WASM longer than Flash did; letting short restaurant SFX cross
+            // world boundaries therefore compounds the emulator's open audio
+            // allocation leak during repeated friend visits. Stop the old
+            // world's remaining channels and release GameSound's static roots
+            // before the replacement world starts its own music and SFX.
+            PerfTrace.mark("setActiveWorld cleanup sounds=" + GameSound.activeGameSounds.length + " memory=" + System.totalMemory);
+            while(GameSound.activeGameSounds.length > 0)
+            {
+               GameSound.activeGameSounds[GameSound.activeGameSounds.length - 1].stop();
+            }
+            GameSound.activeSoundChannels.length = 0;
+            GameSound.activeGameSounds.length = 0;
+            System.gc();
          }
          curWorld = param1;
          if(curWorld != null)
@@ -378,8 +432,23 @@ package com.playfish.games.cooking
                instance.stage.displayState = StageDisplayState.FULL_SCREEN;
             }
          }
-         else if(isFullScreen())
+         else
          {
+            // RC Reborn: exit through the page when the bridge is available —
+            // Ruffle's virtual stage.displayState can be out of sync with the
+            // browser, which would make the old `else if(isFullScreen())`
+            // guard skip the exit entirely.
+            try
+            {
+               if(ExternalInterface.available)
+               {
+                  ExternalInterface.call("rcExitFullscreen");
+                  return;
+               }
+            }
+            catch(e:Error)
+            {
+            }
             Engine.instance.stage.displayState = StageDisplayState.NORMAL;
          }
       }
@@ -479,6 +548,14 @@ package com.playfish.games.cooking
          var _loc2_:int = getTimer();
          var _loc3_:int = Math.max(0,_loc2_ - lastTickTime);
          lastTickTime = _loc2_;
+         // RC Reborn: cap the frame delta. A single stalled frame (tab
+         // throttling, browser freeze, reconnect hiccup) would otherwise hand
+         // a huge elapsed-time chunk to GameWorld.tick and drain every
+         // employee's stamina in one frame.
+         if(_loc3_ > 1000)
+         {
+            _loc3_ = 1000;
+         }
          if(errorDialogs.length == 0)
          {
             GameWorld.tick(_loc3_);
@@ -500,6 +577,14 @@ package com.playfish.games.cooking
       
       private function init(param1:Event) : void
       {
+         // RC Reborn domain lock: the game only boots from the official
+         // domain (plus localhost for development). Any other host gets a
+         // block screen and the game never starts.
+         if(!isDomainAllowed())
+         {
+            showDomainBlocked();
+            return;
+         }
          PerfTrace.mark("Engine.init begin");
          initialize();
          stageWidth = STAGE_WIDTH;
@@ -522,6 +607,11 @@ package com.playfish.games.cooking
          if(!Debug.NETWORK_ONLY)
          {
             flashVars = new URLVariables(Debug.NETWORK_TEST_FLASH_VARS);
+            // RC Reborn: the test flashvars hardcode http://localhost:8090 as
+            // the server host. On the live site that would point the game at
+            // the visitor's own machine, so every localhost URL is rewritten
+            // to this SWF's own origin — works on any domain.
+            rewriteServerHost(flashVars);
          }
          GameWorld.rpcClient = new RpcClient(flashVars);
          GameWorld.registerServerEvents();
@@ -559,6 +649,99 @@ package com.playfish.games.cooking
       public function hasLoadingStarted() : Boolean
       {
          return gameInitLoader != null && gameInitLoader.fileLoader.isTotalBytesReady();
+      }
+      
+      /**
+       * RC Reborn: rewrite the localhost:8090 server URLs in the test flashvars
+       * to this SWF's own origin, so the game talks to whatever host served it.
+       */
+      private static function rewriteServerHost(param1:Object) : void
+      {
+         var _loc2_:String = "";
+         try
+         {
+            _loc2_ = Engine.instance.loaderInfo.url;
+         }
+         catch(e:Error)
+         {
+            _loc2_ = "";
+         }
+         var _loc3_:Array = _loc2_.match(/^([a-zA-Z][a-zA-Z0-9+.-]*:\/\/[^\/]+)/);
+         if(_loc3_ == null || _loc3_.length < 2)
+         {
+            return;
+         }
+         var _loc4_:String = _loc3_[1];
+         var _loc5_:Array = ["pf_url","pf_res_base_url","pf_game_swf_url","pf_lang_url","pf_billing_config","pf_feed_list","pf_purchase_base"];
+         var _loc6_:int = 0;
+         while(_loc6_ < _loc5_.length)
+         {
+            var _loc7_:String = String(param1[_loc5_[_loc6_]]);
+            if(_loc7_ != null && _loc7_ != "")
+            {
+               param1[_loc5_[_loc6_]] = _loc7_.split("http://localhost:8090").join(_loc4_);
+            }
+            _loc6_++;
+         }
+      }
+      
+      /**
+       * RC Reborn domain lock. Allowed hosts are the official domain and the
+       * local development hosts; anything else is blocked in init().
+       */
+      private static function isDomainAllowed() : Boolean
+      {
+         var _loc1_:String = "";
+         try
+         {
+            _loc1_ = instance.loaderInfo.url;
+         }
+         catch(e:Error)
+         {
+            _loc1_ = "";
+         }
+         if(_loc1_ == null || _loc1_ == "")
+         {
+            // No URL available (local-file or unusual runtime): fail open so
+            // the official site can never lock itself out. Re-hosted copies
+            // always carry a URL with a foreign host, which is blocked below.
+            return true;
+         }
+         var _loc2_:Array = _loc1_.match(/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\/([^\/?#]+)/);
+         var _loc3_:String = (_loc2_ != null && _loc2_.length > 1) ? _loc2_[1] : _loc1_;
+         var _loc4_:int = _loc3_.indexOf(":");
+         if(_loc4_ >= 0)
+         {
+            _loc3_ = _loc3_.substring(0,_loc4_);
+         }
+         _loc3_ = _loc3_.toLowerCase();
+         var _loc5_:Array = ["rc-reborn.uk","www.rc-reborn.uk","localhost","127.0.0.1"];
+         var _loc6_:int = 0;
+         while(_loc6_ < _loc5_.length)
+         {
+            if(_loc3_ == _loc5_[_loc6_])
+            {
+               return true;
+            }
+            _loc6_++;
+         }
+         return false;
+      }
+      
+      private function showDomainBlocked() : void
+      {
+         var _loc1_:TextField = new TextField();
+         _loc1_.width = STAGE_WIDTH;
+         _loc1_.height = STAGE_HEIGHT;
+         _loc1_.multiline = true;
+         _loc1_.wordWrap = true;
+         _loc1_.selectable = false;
+         _loc1_.mouseEnabled = false;
+         _loc1_.textColor = 0xFFFFFF;
+         _loc1_.background = true;
+         _loc1_.backgroundColor = 0x1D5478;
+         _loc1_.text = "Restaurant City Reborn is only available at rc-reborn.uk\n\nThis copy has been blocked because it is running outside the official domain.";
+         addChild(_loc1_);
       }
    }
 }

@@ -1152,7 +1152,8 @@ package com.playfish.games.cooking
       
       public function hireFriendsClicked(param1:MouseEvent) : void
       {
-         Engine.setActiveWorld(new WorldHire());
+         destroy();
+         WorldHire.open();
       }
       
       private function onSearchTextChanged(param1:Event) : void

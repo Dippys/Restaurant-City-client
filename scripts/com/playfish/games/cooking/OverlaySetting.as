@@ -7,6 +7,7 @@ package com.playfish.games.cooking
    import com.playfish.rpc.cooking.*;
    import flash.display.*;
    import flash.events.*;
+   import flash.external.ExternalInterface;
    import flash.filters.BitmapFilterQuality;
    import flash.filters.BlurFilter;
    import flash.geom.Matrix;
@@ -305,7 +306,20 @@ package com.playfish.games.cooking
       private function fullScreenButtonClickListener(param1:MouseEvent) : void
       {
          var e:MouseEvent = param1;
-         if(Engine.isFullScreen())
+         // RC Reborn: let the page toggle fullscreen — it knows the real
+         // browser state, which Ruffle's virtual displayState may not reflect.
+         try
+         {
+            if(ExternalInterface.available)
+            {
+               ExternalInterface.call("rcToggleFullscreen");
+               return;
+            }
+         }
+         catch(err:Error)
+         {
+         }
+         if(Engine.isBrowserFullScreen())
          {
             Engine.setFullScreen(false);
             setButtonMode(scene.fullScreenButton,true,"2");

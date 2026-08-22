@@ -54,6 +54,13 @@ package com.playfish.games.cooking.rpc
          addRequest(_loc2_);
          return _loc2_;
       }
+
+      public function getHireCandidates(param1:int) : RpcGetHireCandidates
+      {
+         var _loc2_:RpcGetHireCandidates = new RpcGetHireCandidates(param1);
+         addRequest(_loc2_);
+         return _loc2_;
+      }
       
       public function getReceivedMails() : RpcGetReceivedMails
       {

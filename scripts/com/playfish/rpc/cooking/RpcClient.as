@@ -151,6 +151,8 @@ package com.playfish.rpc.cooking
       internal static const CALL_TYPE_getRandomStreetUsers:uint = 37;
       
       internal static const CALL_TYPE_getGourmetStreetUsers:uint = 38;
+
+      internal static const CALL_TYPE_getHireCandidates:uint = 39;
       
       internal static const CALL_TYPE_purchaseCoinsWithPfCash:uint = 40;
       
@@ -569,6 +571,13 @@ package com.playfish.rpc.cooking
       public function getRandomStreetUsers(param1:Number, param2:Function, param3:Function) : void
       {
          var _loc4_:RpcRequest = RpcRequest(newRpcRequest(CALL_TYPE_getRandomStreetUsers,getUsersResponseHandler,param2,param3));
+         _loc4_.writeUintvar31(param1);
+         _loc4_.perform();
+      }
+
+      public function getHireCandidates(param1:Number, param2:Function, param3:Function) : void
+      {
+         var _loc4_:RpcRequest = RpcRequest(newRpcRequest(CALL_TYPE_getHireCandidates,getUsersResponseHandler,param2,param3));
          _loc4_.writeUintvar31(param1);
          _loc4_.perform();
       }

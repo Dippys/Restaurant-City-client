@@ -20,6 +20,8 @@ package com.playfish.games.cooking
       public static const STREET_ROAD_COLOUR:int = 8684672;
       
       public static const NUM_USERS_TO_LOAD_IN_A_BATCH:int = 50;
+
+      public static const NUM_HIRE_CANDIDATES:int = 50;
       
       public static const BG_OBJECT_Y_OFFSET:int = -15;
       
@@ -67,7 +69,25 @@ package com.playfish.games.cooking
       
       private var parallaxBgLayer:BackgroundLayer;
       
-      public function WorldHire()
+      public static function open(param1:Function = null) : void
+      {
+         var _loc2_:RpcRequestManager = new RpcRequestManager();
+         _loc2_.loadingPopUp = new WorldLoadingPopUp("Loading...",WorldLoadingPopUp.ENTERING);
+         _loc2_.retryText = GameWorld.textHandler.getTextFromId("LoadRestaurantRetryText");
+         var hireRequest:RpcGetHireCandidates = _loc2_.getHireCandidates(NUM_HIRE_CANDIDATES);
+         hireRequest.addEventListener(RpcEvent.SUCCESS,function(param2:RpcEvent):void
+         {
+            var hireWorld:WorldHire = new WorldHire(hireRequest.newUsers);
+            GameWorld.fadeToWorld(hireWorld);
+            if(param1 != null)
+            {
+               param1(hireWorld);
+            }
+         });
+         _loc2_.commit();
+      }
+
+      public function WorldHire(param1:Array = null)
       {
          var _loc2_:MovieClip = null;
          var _loc9_:MovieClip = null;
@@ -102,7 +122,7 @@ package com.playfish.games.cooking
          addChild(frontLayer);
          scrollPanel = new ScrollPanel(frontLayer,this,_loc2_.mc_left,_loc2_.mc_right);
          addObject(scrollPanel);
-         var _loc3_:Array = GameWorld.cachedGameUsers[RpcClient.USER_CONTEXT_FRIENDS | RpcClient.TIME_CONTEXT_ALL];
+         var _loc3_:Array = param1 == null ? new Array() : param1;
          _loc3_ = GameWorld.sortUsers(_loc3_,GameWorld.compareUserAlphabetAscending);
          var _loc4_:int = Math.floor(_loc3_.length / 10 + 1);
          var _loc5_:Number = USER_GAP * _loc3_.length / _loc4_;

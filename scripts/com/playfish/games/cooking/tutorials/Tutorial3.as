@@ -53,7 +53,6 @@ package com.playfish.games.cooking.tutorials
       override public function tickScript(param1:uint) : void
       {
          var _loc2_:WorldEmployeePopUp = null;
-         var _loc3_:WorldHire = null;
          if(step == 0)
          {
             restaurant.employeeActors[0].mouseEnabled = true;
@@ -115,10 +114,11 @@ package com.playfish.games.cooking.tutorials
             if(curHelpTextBox == null)
             {
                restaurant.destroy();
-               _loc3_ = new WorldHire();
-               GameWorld.fadeToWorld(_loc3_);
-               remove();
-               new Tutorial4(_loc3_);
+               WorldHire.open(function(param1:WorldHire):void
+               {
+                  remove();
+                  new Tutorial4(param1);
+               });
                step = 6;
             }
          }
