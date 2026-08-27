@@ -842,9 +842,15 @@ package com.playfish.games.cooking
       
       public static const INGREDIENT_MARKET_UNLOCK_LEVEL:int = 1;
       
-      public static var GLOBAL_RPC_COMMIT_INTERVAL:int = 300000;
+      // RC Reborn (ADR-0031 save-integrity patch scope; cadence per ADR-0036):
+      // autosave every 60 seconds, active or inactive, so an abrupt exit loses
+      // at most one minute of purchases/income instead of five. The commit path
+      // stays strictly serialized (globalSaveInFlight/globalSaveQueued) and the
+      // RPC-session fence (ADR-0031) accepts exactly one version per save, so
+      // frequent saves cannot overlap or re-apply.
+      public static var GLOBAL_RPC_COMMIT_INTERVAL:int = 60000;
       
-      public static var GLOBAL_RPC_COMMIT_INTERVAL_INACTIVE:int = 300000;
+      public static var GLOBAL_RPC_COMMIT_INTERVAL_INACTIVE:int = 60000;
       
       public static var INACTIVE_TIME:int = 60000;
       
