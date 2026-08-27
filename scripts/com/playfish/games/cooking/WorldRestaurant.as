@@ -1629,17 +1629,26 @@ package com.playfish.games.cooking
          }
          PerfTrace.slow("WorldRestaurant.loadRoom create/filter pending=" + _loc4_.length + " placed=" + placedItems.length,_loc9_,5);
          _loc9_ = getTimer();
+         // RC Reborn: the shipped loop placed surface+stackable items in
+         // REVERSE profile order, which only restores the player's stacking
+         // when the server delivers owned items newest-first. The RC Reborn
+         // server delivers them oldest-first (serverId ASC), so the reverse
+         // loop put the newer top-of-stack item UNDER the older bottom item
+         // (e.g. a Sake Keg on a Crate rendered beneath it after load).
+         // Place in profile order instead: oldest-first == bottom-first.
          _loc7_ = 0;
-         _loc8_ = int(_loc4_.length - 1);
-         while(_loc8_ >= 0)
+         while(_loc7_ < _loc4_.length)
          {
-            _loc5_ = _loc4_[_loc8_];
+            _loc5_ = _loc4_[_loc7_];
             if(_loc5_.surface && _loc5_.stackable)
             {
                placeItemInRoom(_loc5_,_loc5_.roomTileX,_loc5_.roomTileY,_loc5_.roomIndex);
-               _loc4_.splice(_loc8_,1);
+               _loc4_.splice(_loc7_,1);
             }
-            _loc8_--;
+            else
+            {
+               _loc7_++;
+            }
          }
          PerfTrace.slow("WorldRestaurant.loadRoom stackable surfaces pending=" + _loc4_.length + " placed=" + placedItems.length,_loc9_,5);
          _loc9_ = getTimer();
