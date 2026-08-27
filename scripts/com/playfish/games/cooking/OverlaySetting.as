@@ -38,7 +38,7 @@ package com.playfish.games.cooking
       private var saveGameTextId:String = "GameSavedStaffNeedsWork";
       
       private var scene:MovieClip;
-      
+
       public function OverlaySetting()
       {
          super();

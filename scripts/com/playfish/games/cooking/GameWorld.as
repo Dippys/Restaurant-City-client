@@ -8,6 +8,8 @@ package com.playfish.games.cooking
    import com.playfish.coretech.platform.socialplatform.SocialFeed;
    import com.playfish.coretech.platform.socialplatform.SocialPlatform;
    import com.playfish.coretech.platform.socialplatform.SocialPlatformFeeds;
+   import com.playfish.coretech.platform.socialplatform.stream.IStreamParameter;
+   import com.playfish.coretech.platform.socialplatform.stream.Stream;
    import com.playfish.coretech.platform.socialstats.FriendshipMetric;
    import com.playfish.coretech.platform.socialstats.SocialStats;
    import com.playfish.external.*;
@@ -121,6 +123,16 @@ package com.playfish.games.cooking
       public static const EMAIL_PERMISSION_REMINDER_POP_UP_CHANCE:Number = 0.5;
       
       private static const SERVER_ALERT_EVENT:uint = 1;
+
+      private static const SERVER_MAIL_EVENT:uint = 2;
+
+      private static var serverMailRefreshInFlight:Boolean = false;
+
+      private static var serverMailRefreshAgain:Boolean = false;
+
+      private static var serverMailPopupPending:Boolean = false;
+
+      private static var serverMailSeenIds:Object = new Object();
       
       public static const SHOP_UPDATE_DAY_IN_WEEK:int = 1;
       
@@ -830,7 +842,7 @@ package com.playfish.games.cooking
       
       public static const INGREDIENT_MARKET_UNLOCK_LEVEL:int = 1;
       
-      public static var GLOBAL_RPC_COMMIT_INTERVAL:int = 60000;
+      public static var GLOBAL_RPC_COMMIT_INTERVAL:int = 300000;
       
       public static var GLOBAL_RPC_COMMIT_INTERVAL_INACTIVE:int = 300000;
       
@@ -843,6 +855,10 @@ package com.playfish.games.cooking
       public static var globalRpcs:RpcRequestManager = new RpcRequestManager();
       
       public static var saveProfileHandler:SaveProfileHandler = new SaveProfileHandler();
+
+      private static var globalSaveInFlight:Boolean = false;
+
+      private static var globalSaveQueued:Boolean = false;
       
       public static var gameEventDispatcher:EventDispatcher = new EventDispatcher();
       
@@ -928,6 +944,11 @@ package com.playfish.games.cooking
       
       public static function commitGlobalRpcs() : Boolean
       {
+         if(globalSaveInFlight)
+         {
+            globalSaveQueued = true;
+            return true;
+         }
          tickOfflineTime();
          var _loc1_:Number = 0;
          while(_loc1_ < gameUser.employeeUsers.length)
@@ -937,10 +958,27 @@ package com.playfish.games.cooking
          }
          globalRpcs.getServerTime();
          globalRpcs.addRequest(saveProfileHandler);
+         saveProfileHandler.addEventListener(RpcEvent.SUCCESS,onSerializedSaveComplete,false,-100,true);
+         saveProfileHandler.addEventListener(RpcEvent.FAIL,onSerializedSaveComplete,false,-100,true);
+         globalSaveInFlight = true;
          var _loc2_:Boolean = globalRpcs.commit();
          globalRpcs = new RpcRequestManager();
          saveProfileHandler = new SaveProfileHandler();
+         if(!_loc2_)
+         {
+            globalSaveInFlight = false;
+         }
          return _loc2_;
+      }
+
+      private static function onSerializedSaveComplete(param1:RpcEvent) : void
+      {
+         globalSaveInFlight = false;
+         if(globalSaveQueued)
+         {
+            globalSaveQueued = false;
+            commitGlobalRpcs();
+         }
       }
       
       public static function setBlackSheepItems() : void
@@ -1354,6 +1392,8 @@ package com.playfish.games.cooking
          {
             rpcClient.registerEventType(SERVER_ALERT_EVENT,readServerAlertEvent);
             rpcClient.setEventHandler(SERVER_ALERT_EVENT,showServerAlert);
+            rpcClient.registerEventType(SERVER_MAIL_EVENT,readServerMailEvent);
+            rpcClient.setEventHandler(SERVER_MAIL_EVENT,refreshServerMail);
          }
          catch(e:Error)
          {
@@ -1396,6 +1436,168 @@ package com.playfish.games.cooking
          var _loc5_:WorldPopUp = new WorldPopUp(_loc3_,_loc4_.mc_ok,null);
          _loc5_.drawPriority = DRAW_PRIORITY_POP_UP;
          _loc5_.queueToShow();
+      }
+
+      private static function readServerMailEvent(param1:RpcResponseBase, param2:Function) : Function
+      {
+         var mailType:uint = param1.readUint8();
+         var handler:Function = param2;
+         return function():void
+         {
+            handler(mailType);
+         };
+      }
+
+      private static function refreshServerMail(param1:uint) : void
+      {
+         var mailsRpc:RpcGetReceivedMails = null;
+         if(param1 == RpcClient.MAIL_TYPE_DAILYINGREDIENT || param1 == RpcClient.MAIL_FOOD_KING_ITEM || param1 == RpcClient.MAIL_FAN_PAGE_ITEM || param1 == RpcClient.MAIL_SPECIAL_DAY_ITEM)
+         {
+            serverMailPopupPending = true;
+         }
+         if(serverMailRefreshInFlight)
+         {
+            serverMailRefreshAgain = true;
+            return;
+         }
+         serverMailRefreshInFlight = true;
+         mailsRpc = new RpcGetReceivedMails();
+         mailsRpc.addEventListener(RpcEvent.SUCCESS,function(param1:RpcEvent):void
+         {
+            mergeServerMail(mailsRpc.mails);
+            serverMailRefreshInFlight = false;
+            if(WorldRestaurantPlay.instance != null)
+            {
+               WorldRestaurantPlay.instance.refreshMails();
+               if(serverMailPopupPending)
+               {
+                  serverMailPopupPending = false;
+                  WorldRestaurantPlay.instance.displayGameStartUpPopUps();
+               }
+               if(!WorldRestaurantPlay.instance.visitMode && gameUser.level.value > 0 && settingOverlay != null && !settingOverlay.saveButtonVisible() && WorldPopUp.activePopUp.length == 0)
+               {
+                  settingOverlay.showSaveButton();
+               }
+            }
+            if(serverMailRefreshAgain)
+            {
+               serverMailRefreshAgain = false;
+               refreshServerMail(0);
+            }
+         });
+         mailsRpc.addEventListener(RpcEvent.FAIL,function(param1:RpcEvent):void
+         {
+            serverMailRefreshInFlight = false;
+            serverMailRefreshAgain = false;
+            Debug.out("live mail refresh failed");
+         });
+         mailsRpc.commit();
+      }
+
+      // Live polling is incremental. RpcGetReceivedMails.applyData() is only safe
+      // during startup: it rebuilds the mailbox and replays cash/perk compensation
+      // for every unread row. Re-running it for one pushed mail can duplicate UI
+      // state and reward side effects, so retain the current mailbox and add only
+      // ids that the running client has not already seen.
+      private static function mergeServerMail(param1:Array) : void
+      {
+         var _loc2_:Mail = null;
+         for each(_loc2_ in param1)
+         {
+            if(!serverMailSeenIds[_loc2_.id])
+            {
+               applyLiveMailReward(_loc2_);
+               addNewMail(_loc2_);
+               markServerMailSeen(_loc2_);
+            }
+         }
+      }
+
+      public static function markServerMailSeen(param1:Mail) : void
+      {
+         if(param1 != null && param1.id > 0)
+         {
+            serverMailSeenIds[param1.id] = true;
+         }
+      }
+
+      // Mail rewards are persisted before the live event is queued. The original
+      // startup path sees them in the full profile, but an already-running client
+      // needs the same delta applied to its in-memory collections immediately.
+      // Do not add save-audit entries here: the server already owns the grant.
+      private static function applyLiveMailReward(param1:Mail) : void
+      {
+         var _loc2_:int = 0;
+         var _loc3_:int = 0;
+         if(param1.type == RpcClient.MAIL_TYPE_CASH && param1.message.indexOf("PFC:") == 0)
+         {
+            _loc2_ = parseInt(param1.message.substr(4));
+            if(_loc2_ > 0 && cashPanel != null)
+            {
+               cashPanel.addPlayfishCash(_loc2_,false);
+            }
+            return;
+         }
+         if(param1.type == RpcClient.MAIL_TYPE_SECUREECHANGE_OK && param1.globalItemIds != null && param1.globalItemIds.length == 2)
+         {
+            _loc2_ = int(param1.globalItemIds[0]);
+            _loc3_ = int(param1.globalItemIds[1]);
+            if(gameUser.getIngredient(getItemConfig(_loc2_)) != null)
+            {
+               gameUser.removeIngredient(getItemConfig(_loc2_),1);
+            }
+            addLiveMailItem(_loc3_,true);
+            return;
+         }
+         if(param1.type != RpcClient.MAIL_TYPE_GIFT && param1.type != RpcClient.MAIL_TYPE_DAILYINGREDIENT && param1.type != RpcClient.MAIL_TYPE_GIFT_INVITE && param1.type != RpcClient.MAIL_FOOD_KING_ITEM && param1.type != RpcClient.MAIL_FAN_PAGE_ITEM && param1.type != RpcClient.MAIL_SPECIAL_DAY_ITEM)
+         {
+            return;
+         }
+         if(param1.globalItemIds == null)
+         {
+            return;
+         }
+         for each(_loc2_ in param1.globalItemIds)
+         {
+            addLiveMailItem(_loc2_);
+         }
+      }
+
+      private static function addLiveMailItem(param1:int, param2:Boolean = false) : void
+      {
+         var _loc3_:Object = getItemConfig(param1);
+         var _loc4_:Recipe = null;
+         var _loc5_:int = 0;
+         if(_loc3_ == null)
+         {
+            return;
+         }
+         _loc5_ = getItemType(param1);
+         if(_loc5_ == GameUser.ITEM_TYPE_INGREDIENT)
+         {
+            gameUser.addIngredient(_loc3_,1);
+            if(param2)
+            {
+               gameUser.getIngredient(_loc3_).lock = true;
+            }
+         }
+         else if(_loc5_ == GameUser.ITEM_TYPE_RECIPE)
+         {
+            _loc4_ = gameUser.getOwnedRecipe(param1);
+            if(_loc4_ == null)
+            {
+               _loc4_ = new Recipe(_loc3_);
+               gameUser.ownedRecipeItems.push(_loc4_);
+            }
+            else
+            {
+               _loc4_.level = Math.min(_loc4_.level + 1,10);
+            }
+         }
+         else if(_loc5_ != GameUser.ITEM_TYPE_PERK || getItemSubType(param1) != GameUser.PERK_ITEM_TYPE_COIN_REWARD && getItemSubType(param1) != GameUser.PERK_ITEM_TYPE_DEMAND_REWARD)
+         {
+            gameUser.addInventoryItem(new InventoryUserItem(_loc3_));
+         }
       }
       
       public static function getItemType(param1:int) : int
@@ -1525,6 +1727,8 @@ package com.playfish.games.cooking
       {
          var streamEnabled:Boolean = false;
          var streamFeed:SocialFeed = null;
+         var legacyStream:Stream = null;
+         var streamParameter:IStreamParameter = null;
          var i:int = 0;
          var localStory:SocialFeed = null;
          var title:String = param1;
@@ -1548,22 +1752,48 @@ package com.playfish.games.cooking
             if(streamEnabled)
             {
                streamFeed = SocialPlatform.current.feeds.createFeed(SocialPlatformFeeds.DEFAULT_TYPE,true);
-               streamFeed.addStreamData(streamFeed.createTitleText(title));
-               streamFeed.addStreamData(streamFeed.createInformationText(information,linkUrl));
-               streamFeed.addStreamData(streamFeed.createCaptionText(caption));
-               streamFeed.addStreamData(streamFeed.createDescriptionText(description));
-               streamFeed.addStreamData(streamFeed.createLink(linkText,linkUrl));
+               legacyStream = new Stream();
+               legacyStream.setTarget(SocialPlatform.current.user.getID());
+               streamParameter = streamFeed.createTitleText(title);
+               streamFeed.addStreamData(streamParameter);
+               legacyStream.addParameters(streamParameter);
+               streamParameter = streamFeed.createInformationText(information,linkUrl);
+               streamFeed.addStreamData(streamParameter);
+               legacyStream.addParameters(streamParameter);
+               streamParameter = streamFeed.createCaptionText(caption);
+               streamFeed.addStreamData(streamParameter);
+               legacyStream.addParameters(streamParameter);
+               streamParameter = streamFeed.createDescriptionText(description);
+               streamFeed.addStreamData(streamParameter);
+               legacyStream.addParameters(streamParameter);
+               streamParameter = streamFeed.createLink(linkText,linkUrl);
+               streamFeed.addStreamData(streamParameter);
+               legacyStream.addParameters(streamParameter);
                if(userInput)
                {
-                  streamFeed.addStreamData(streamFeed.createUserInput(userInput));
+                  streamParameter = streamFeed.createUserInput(userInput);
+                  streamFeed.addStreamData(streamParameter);
+                  legacyStream.addParameters(streamParameter);
                }
                i = 0;
                while(i < imageNames.length)
                {
-                  streamFeed.addStreamData(streamFeed.createMediaImage("http://static.playfish.com/game/cooking/feed/v1/" + imageNames[i],linkUrl,null));
+                  streamParameter = streamFeed.createMediaImage("http://static.playfish.com/game/cooking/feed/v1/" + imageNames[i],linkUrl,null);
+                  streamFeed.addStreamData(streamParameter);
+                  legacyStream.addParameters(streamParameter);
                   i++;
                }
-               streamFeed.publish();
+               // RC Reborn / Ruffle: the restored login path can leave the
+               // generic feed driver active. Preserve the shipped stream
+               // schema and ExternalPage handoff so the website owns the UI.
+               if(getQualifiedClassName(streamFeed) == "com.playfish.coretech.platform.socialplatform::SocialFeed")
+               {
+                  new ExternalPage("stream").show(legacyStream.toStream(userInput));
+               }
+               else
+               {
+                  streamFeed.publish();
+               }
                localStory = SocialPlatform.current.feeds.createFeed("nudge");
                localStory.addStreamData(localStory.createLink("Play Restaurant City!","http://apps.facebook.com/restaurantcity/?pf_ref=fp_rc_gd"));
                localStory.addStreamData(localStory.createDescriptionText(dashboardText));
@@ -2750,6 +2980,10 @@ package com.playfish.games.cooking
       public static function tick(param1:uint) : void
       {
          inactiveTimer += param1;
+         if(WorldRestaurantPlay.instance != null && !WorldRestaurantPlay.instance.visitMode && gameUser.level.value > 0 && settingOverlay != null && !settingOverlay.saveButtonVisible() && WorldPopUp.activePopUp.length == 0)
+         {
+            settingOverlay.showSaveButton();
+         }
          if(globalRpcsTimer >= 0)
          {
             globalRpcsTimer += param1;

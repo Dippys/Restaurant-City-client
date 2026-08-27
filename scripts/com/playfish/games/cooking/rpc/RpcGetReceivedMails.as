@@ -33,7 +33,10 @@ package com.playfish.games.cooking.rpc
          var _loc4_:Object = null;
          if(param1.type == RpcClient.MAIL_TYPE_CASH)
          {
-            GameWorld.gameUser.money.value -= parseInt(param1.message);
+            if(param1.message.indexOf("PFC:") != 0)
+            {
+               GameWorld.gameUser.money.value -= parseInt(param1.message);
+            }
          }
          else if(Boolean(param1.globalItemIds) && param1.globalItemIds.length > 0)
          {
@@ -80,6 +83,7 @@ package com.playfish.games.cooking.rpc
             while(_loc1_ < mails.length)
             {
                _loc2_ = mails[_loc1_];
+               GameWorld.markServerMailSeen(_loc2_);
                addNewMail(_loc2_);
                _loc1_++;
             }

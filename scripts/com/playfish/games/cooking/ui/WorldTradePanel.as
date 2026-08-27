@@ -135,6 +135,9 @@ package com.playfish.games.cooking.ui
          var _loc7_:RpcTradeIngredients = null;
          if(Boolean(userItem) && Boolean(traderItem))
          {
+            // Prevent several identical RPCs while the first trade is in flight.
+            // The success/failure handlers restore the appropriate UI state.
+            disableTradeConfirm();
             secure = isSecureTrade();
             if(GameWorld.saveProfileHandler.isIngredientHarvested(userItem.itemConfig))
             {
@@ -186,6 +189,7 @@ package com.playfish.games.cooking.ui
       
       private function onTradeRequestSendOK(param1:MouseEvent) : void
       {
+         MovieClip(param1.currentTarget).removeEventListener(MouseEvent.CLICK,onTradeRequestSendOK);
          loadingPopUp = new WorldLoadingPopUp("Trading...",WorldLoadingPopUp.SECURE_TRADE);
          loadingPopUp.x = GameWorld.CANVAS_CENTER_X;
          loadingPopUp.y = GameWorld.CANVAS_CENTER_Y;
