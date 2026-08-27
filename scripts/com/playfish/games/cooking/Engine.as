@@ -96,16 +96,36 @@ package com.playfish.games.cooking
       {
          if(instance.stage.displayState == StageDisplayState.FULL_SCREEN)
          {
-            return instance.stage.fullScreenSourceRect.x - instance.gameOffsetX;
+            return getSafeFullScreenSourceRect().x - instance.gameOffsetX;
          }
          return 0;
+      }
+
+      /**
+       * RC Reborn: Ruffle can enter browser fullscreen through the page before
+       * ActionScript has assigned Stage.fullScreenSourceRect.  Every HUD
+       * geometry helper assumes that rectangle exists; a null value throws
+       * after CashPanel has already mutated the balance, leaving customer
+       * payout state live and repeating the award on every frame.  Fall back
+       * to the shipped 760x600 stage and persist it on Stage so all fullscreen
+       * listeners observe one valid rectangle.
+       */
+      private static function getSafeFullScreenSourceRect() : Rectangle
+      {
+         var _loc1_:Rectangle = instance.stage.fullScreenSourceRect;
+         if(_loc1_ == null || _loc1_.width <= 0 || _loc1_.height <= 0)
+         {
+            _loc1_ = new Rectangle(instance.gameOffsetX,instance.gameOffsetY,STAGE_WIDTH,STAGE_HEIGHT);
+            instance.stage.fullScreenSourceRect = _loc1_;
+         }
+         return _loc1_;
       }
       
       public static function getStageBottom() : Number
       {
          if(instance.stage.displayState == StageDisplayState.FULL_SCREEN)
          {
-            return instance.stage.fullScreenSourceRect.bottom - instance.gameOffsetY;
+            return getSafeFullScreenSourceRect().bottom - instance.gameOffsetY;
          }
          return STAGE_HEIGHT;
       }
@@ -124,7 +144,7 @@ package com.playfish.games.cooking
       {
          if(instance.stage.displayState == StageDisplayState.FULL_SCREEN)
          {
-            return instance.stage.fullScreenSourceRect.y - instance.gameOffsetY;
+            return getSafeFullScreenSourceRect().y - instance.gameOffsetY;
          }
          return 0;
       }
@@ -177,7 +197,7 @@ package com.playfish.games.cooking
       {
          if(instance.stage.displayState == StageDisplayState.FULL_SCREEN)
          {
-            return instance.stage.fullScreenSourceRect.height;
+            return getSafeFullScreenSourceRect().height;
          }
          return STAGE_HEIGHT;
       }
@@ -253,7 +273,7 @@ package com.playfish.games.cooking
       {
          if(instance.stage.displayState == StageDisplayState.FULL_SCREEN)
          {
-            return instance.stage.fullScreenSourceRect.right - instance.gameOffsetX;
+            return getSafeFullScreenSourceRect().right - instance.gameOffsetX;
          }
          return STAGE_WIDTH;
       }
@@ -335,7 +355,7 @@ package com.playfish.games.cooking
       {
          if(instance.stage.displayState == StageDisplayState.FULL_SCREEN)
          {
-            return instance.stage.fullScreenSourceRect.width;
+            return getSafeFullScreenSourceRect().width;
          }
          return STAGE_WIDTH;
       }
