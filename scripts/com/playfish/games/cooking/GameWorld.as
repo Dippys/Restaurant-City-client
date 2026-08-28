@@ -119,11 +119,14 @@ package com.playfish.games.cooking
       
       public static const CANVAS_CENTER_Y:int = CANVAS_HEIGHT / 2;
       
-      public static const NETPROMOTER_POP_UP_CHANCE:Number = 0.0005;
+      // RC Reborn widescreen test: intro popups disabled so the street intro
+      // (logo animation -> auto-enter restaurant) is deterministic under
+      // headless capture. Revert before any release.
+      public static const NETPROMOTER_POP_UP_CHANCE:Number = 0;
       
       public static const FRIENDS_INVITE_POP_UP_CHANCE:Number = 0.05;
       
-      public static const EMAIL_PERMISSION_REMINDER_POP_UP_CHANCE:Number = 0.5;
+      public static const EMAIL_PERMISSION_REMINDER_POP_UP_CHANCE:Number = 0;
       
       private static const SERVER_ALERT_EVENT:uint = 1;
 
