@@ -626,18 +626,25 @@ package com.playfish.games.cooking
       
       public function addIngredient(param1:Object, param2:int) : void
       {
+         // RC Reborn trade-safety patch: every ingredient the player receives
+         // (harvest, quiz reward, mail gift, purchase, trade…) starts locked.
+         // The server creates received-ingredient rows locked too, so the lock
+         // icon is consistent immediately and the item cannot be traded away
+         // until the owner unlocks it manually.
          var _loc3_:Number = 0;
          while(_loc3_ < ingredients.length)
          {
             if(param1.id == ingredients[_loc3_].itemConfig.id)
             {
                ingredients[_loc3_].count += param2;
+               ingredients[_loc3_].lock = true;
                return;
             }
             _loc3_++;
          }
          var _loc4_:IngredientItem = new IngredientItem(param1);
          _loc4_.count = param2;
+         _loc4_.lock = true;
          _loc3_ = 0;
          while(_loc3_ < ingredients.length)
          {

@@ -38,9 +38,11 @@ compiler directly (`java -jar C:\flex\lib\mxmlc.jar …`) rather than the Royale
 `node_modules/.bin/mxmlc` shim — that shim `execFileSync`s a `.bat` without
 `shell: true` and throws `EINVAL` on current Node.
 
-The release source includes two bounded RC Reborn patch sets documented in
-`../../docs/release.md`: the `Engine.as` domain/runtime patch and ADR-0017's
-additive message-type-39 Hire-candidate loader. Do not broaden those patches
+The release source includes the bounded RC Reborn patch sets documented in
+`../../docs/release.md` — the `Engine.as` domain/runtime patch, ADR-0017's
+additive message-type-39 Hire-candidate loader, the save-integrity / live-mail /
+stacked-item / fullscreen patches, and ADR-0042's trade-safety
+`GameUser.addIngredient()` receive-lock patch. Do not broaden those patches
 into unrelated changes to the decompiled behavioral specification.
 
 ### Why a bare compile
