@@ -108,7 +108,10 @@ package com.playfish.games.cooking
       
       public static const DEBUG:Boolean = Debug.DEBUG;
       
-      public static const CANVAS_WIDTH:int = 760;
+      // RC Reborn widescreen test: the world canvas width tracks the (widened)
+      // stage width so street actors, hire/scroll panels and background tiling
+      // stay proportional; CANVAS_HEIGHT keeps the shipped 600.
+      public static const CANVAS_WIDTH:int = Engine.STAGE_WIDTH;
       
       public static const CANVAS_HEIGHT:int = 600;
       

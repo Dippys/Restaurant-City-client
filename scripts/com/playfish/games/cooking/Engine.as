@@ -36,7 +36,10 @@ package com.playfish.games.cooking
       
       public static const GAME_VERSION:String = "0.9.143";
       
-      public static const STAGE_WIDTH:int = 760;
+      // RC Reborn widescreen test (branch widescreen-support): the logical
+      // stage width is widened from the shipped 760 to 1067 (16:9 at the
+      // shipped 600 height). Every getStage*/STAGE_WIDTH consumer follows.
+      public static const STAGE_WIDTH:int = 1067;
       
       public static const STAGE_HEIGHT:int = 600;
       

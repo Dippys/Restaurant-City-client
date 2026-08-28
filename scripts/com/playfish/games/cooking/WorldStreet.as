@@ -101,7 +101,9 @@ package com.playfish.games.cooking
       
       private var buildings:Array;
       
-      private var canvasWidth:int = 760;
+      // RC Reborn widescreen test: street scene width tracks the widened stage
+      // so the visible street fills the viewport instead of the left 760px.
+      private var canvasWidth:int = Engine.STAGE_WIDTH;
       
       private var actorTimer:int = 0;
       

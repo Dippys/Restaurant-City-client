@@ -195,7 +195,9 @@ package com.playfish.games.cooking
       
       private var baseOutsideAreaFloor:Shape;
       
-      public var canvasWidth:Number = 760;
+      // RC Reborn widescreen test: restaurant camera/centering tracks the
+      // widened stage width; the room clip itself stays its shipped size.
+      public var canvasWidth:Number = Engine.STAGE_WIDTH;
       
       public var activeRoomIndex:int = 0;
       

@@ -39,7 +39,7 @@ java -jar "%MXMLC_JAR%" ^
   -external-library-path+="%PG%" ^
   -target-player=25.0 ^
   -swf-version=25 ^
-  -default-size 760 600 ^
+  -default-size 1067 600 ^
   -default-frame-rate=25 ^
   -static-link-runtime-shared-libraries=true ^
   -includes+=away3d.events.BillboardEvent ^
