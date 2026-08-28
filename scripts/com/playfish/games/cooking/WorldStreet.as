@@ -113,6 +113,11 @@ package com.playfish.games.cooking
       
       private var intro:Boolean = false;
       
+      // RC Reborn widescreen test: the intro LogoAnimation stalls under Ruffle
+      // (never reaches totalFrames), which would block the auto-entry into the
+      // restaurant forever. Force-complete the intro after ~6s of ticks.
+      private var introTickCount:int = 0;
+      
       private var visibleBuildingIndices:Array = new Array();
       
       private var buildingItemsLoaded:Array;
@@ -769,7 +774,7 @@ package com.playfish.games.cooking
             sceneLayer.y = logoMovieClip.mc_street.y;
             sceneLayer.scaleX = logoMovieClip.mc_street.scaleX;
             sceneLayer.scaleY = logoMovieClip.mc_street.scaleY;
-            if(logoMovieClip.currentFrame >= logoMovieClip.totalFrames)
+            if(logoMovieClip.currentFrame >= logoMovieClip.totalFrames || ++introTickCount > 150)
             {
                logoMovieClip.stop();
                logoMovieClip = null;
