@@ -43,6 +43,8 @@ package com.playfish.games.cooking
       
       private static const FOODKING_BILLBOARD_ITEM_ID:int = 2090004;
       
+      private static const HALLOWEEN_STREET_ITEM_ID:int = 2040052;
+      
       private static const STATE_NORMAL:int = 0;
       
       private static const STATE_PANNING:int = 1;
@@ -205,6 +207,14 @@ package com.playfish.games.cooking
          logoMovieClip.play();
       }
       
+      private function halloweenStreetEnabled() : Boolean
+      {
+         var _loc1_:Object = itemDatabase == null ? null : itemDatabase.getItemFromId(HALLOWEEN_STREET_ITEM_ID);
+         var _loc2_:Boolean = _loc1_ != null && !_loc1_.invisible;
+         Debug.out("RC Reborn ADR-0055: halloween street=" + _loc2_ + " seasonal street item=" + HALLOWEEN_STREET_ITEM_ID);
+         return _loc2_;
+      }
+      
       public function init(param1:Event) : void
       {
          var _loc2_:MovieClip = null;
@@ -233,7 +243,7 @@ package com.playfish.games.cooking
          }
          else
          {
-            _loc2_ = Engine.getMovieClip("StreetViewScene");
+            _loc2_ = Engine.getMovieClip(halloweenStreetEnabled() ? "HalloweenStreetViewScene" : "StreetViewScene");
          }
          buildingY = _loc2_.mc_road.y + _loc2_.mc_road.getBounds(null).top;
          buildingLayer = new BaseObject();
